@@ -80,24 +80,6 @@ define('VERTICALS', [
     'general' => 'Geral'
 ]);
 
-// Autoloader for PSR-4
-spl_autoload_register(function ($class) {
-    $prefix = 'Sunyata\\';
-    $base_dir = SRC_PATH . '/';
-
-    $len = strlen($prefix);
-    if (strncmp($prefix, $class, $len) !== 0) {
-        return;
-    }
-
-    $relative_class = substr($class, $len);
-    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-    if (file_exists($file)) {
-        require $file;
-    }
-});
-
 // Helper functions
 function require_login() {
     if (!isset($_SESSION['user_id'])) {
