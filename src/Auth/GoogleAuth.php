@@ -143,6 +143,23 @@ class GoogleAuth {
         // Update last login
         $this->user->updateLastLogin($user['id']);
 
+        // TEMPORARY: Demo mode - allow all users
+        // Skip contract verification for demo purposes
+        // TODO: Re-enable contract verification before production launch
+        /*
+        // Check if user has active contract
+        if ($user['access_level'] === 'guest') {
+            $hasActiveContract = $this->checkActiveContract($user['id']);
+            if (!$hasActiveContract) {
+                return [
+                    'success' => false,
+                    'error' => 'No active contract found',
+                    'redirect' => '/error-no-contract.php'
+                ];
+            }
+        }
+        */
+
         // Create session
         $this->createSession($user);
 
