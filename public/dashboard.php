@@ -166,8 +166,15 @@ $pageTitle = 'Dashboard';
                 </div>
             </div>
 
+            <!-- Ferramentas Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="mb-3">Ferramentas</h3>
+                </div>
+            </div>
+
             <div class="row g-4 mb-5">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="card h-100 border-primary">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-3">
@@ -186,6 +193,54 @@ $pageTitle = 'Dashboard';
                     </div>
                 </div>
 
+                <div class="col-md-3">
+                    <div class="card h-100 border-primary">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <span style="font-size: 32px;">📚</span>
+                            </div>
+                            <h5 class="card-title mb-3">Canvas de Delimitação - Docentes</h5>
+                            <p class="card-text">Crie prompts estruturados para atividades docentes</p>
+                            <a href="<?= BASE_URL ?>/ferramentas/canvas-docente.html" class="btn btn-primary">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 border-primary">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <span style="font-size: 32px;">⚖️</span>
+                            </div>
+                            <h5 class="card-title mb-3">Canvas de Delimitação - Jurídico</h5>
+                            <p class="card-text">Transforme demandas jurídicas em instruções precisas</p>
+                            <a href="<?= BASE_URL ?>/ferramentas/canvas-juridico.html" class="btn btn-primary">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 border-primary">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <span style="font-size: 32px;">🔬</span>
+                            </div>
+                            <h5 class="card-title mb-3">Canvas de Delimitação - Pesquisa</h5>
+                            <p class="card-text">Estruture tarefas de pesquisa acadêmica</p>
+                            <a href="<?= BASE_URL ?>/ferramentas/canvas-pesquisa.html" class="btn btn-primary">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Services Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h3 class="mb-3">Outros Serviços</h3>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
                 <div class="col-md-4">
                     <div class="card h-100">
                         <div class="card-body">
