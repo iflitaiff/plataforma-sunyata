@@ -12,6 +12,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="<?= BASE_URL ?>/dicionario.php">Dicionário de Prompts</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>/areas/direito/">Direito</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="<?= BASE_URL ?>/areas/pesquisa-ensino/">Pesquisa & Ensino</a>
+                </li>
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">

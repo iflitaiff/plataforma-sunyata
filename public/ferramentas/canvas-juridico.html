@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas de Delimitação - Advocacia RJ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .temp-notice {
+            background: #1a365d;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .canvas-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border-left: 5px solid #1a365d;
+            transition: all 0.3s ease;
+        }
+        
+        .canvas-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .canvas-item h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            background: #1a365d;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .canvas-item textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 14px;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        
+        .canvas-item textarea:focus {
+            outline: none;
+            border-color: #1a365d;
+        }
+        
+        .canvas-item .hint {
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .examples {
+            background: #e6f3ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            border-left: 5px solid #1a365d;
+        }
+        
+        .examples h3 {
+            color: #1a365d;
+            margin-bottom: 15px;
+        }
+        
+        .example-tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            background: #1a365d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .tab-button:hover, .tab-button.active {
+            background: #2d5a87;
+            transform: translateY(-2px);
+        }
+        
+        .example-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .example-content.active {
+            display: block;
+        }
+        
+        .example-content h4 {
+            color: #1a365d;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .persona-tag {
+            background: #2d5a87;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .example-content p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .generate-button {
+            background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto;
+            transition: all 0.3s ease;
+        }
+        
+        .generate-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .output {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid #e9ecef;
+            display: none;
+        }
+        
+        .output.show {
+            display: block;
+        }
+        
+        .output h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .prompt-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .copy-button {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .copy-button:hover {
+            background: #38a169;
+        }
+        
+        .contacts-section {
+            background: #1a365d;
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 40px 0 20px 0;
+            text-align: center;
+        }
+        
+        .contacts-section h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .contacts-section p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .contacts-section a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        
+        .contacts-section a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+        }
+        
+        .copyright {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .copyright a {
+            color: #1a365d;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .copyright a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .canvas-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .example-tabs {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Canvas de Delimitação Jurídica</h1>
+            <p>Transforme demandas jurídicas vagas em instruções precisas para IA</p>
+            <div class="temp-notice">
+                Especializado para Grandes Escritórios de Advocacia do Rio de Janeiro
+            </div>
+        </div>
+
+        <div class="examples">
+            <h3>📋 Exemplos por Atividade Jurídica</h3>
+            <div class="example-tabs">
+                <button class="tab-button active" onclick="showExample('due_diligence')">Due Diligence</button>
+                <button class="tab-button" onclick="showExample('contratos')">Análise Contratos</button>
+                <button class="tab-button" onclick="showExample('jurisprudencia')">Pesq. Jurisprudencial</button>
+                <button class="tab-button" onclick="showExample('parecer')">Elaboração Parecer</button>
+                <button class="tab-button" onclick="showExample('peticao')">Redação Petição</button>
+                <button class="tab-button" onclick="showExample('compliance')">Compliance</button>
+                <button class="tab-button" onclick="showExample('precedentes')">Precedentes</button>
+                <button class="tab-button" onclick="showExample('memorando')">Memorando</button>
+                <button class="tab-button" onclick="showExample('viabilidade')">Viabilidade</button>
+                <button class="tab-button" onclick="showExample('organizacao')">Org. Processual</button>
+                <button class="tab-button" onclick="showExample('riscos')">Análise Riscos</button>
+                <button class="tab-button" onclick="showExample('estruturacao')">Estruturação</button>
+            </div>
+            
+            <div id="due_diligence" class="example-content active">
+                <h4>Due Diligence Societária</h4>
+                <span class="persona-tag">Advogado Sênior - M&A</span>
+                <p><strong>Tarefa:</strong> Elaborar checklist de due diligence para aquisição de startup fintech brasileira (R$ 50MM)</p>
+                <p><strong>Contexto:</strong> Cliente fundo private equity, target com 3 anos operação, regulada BACEN, 50 funcionários</p>
+                <p><strong>Entradas:</strong> Contrato social, demonstrações financeiras, contratos principais, licenças BACEN</p>
+                <p><strong>Restrições:</strong> Prazo 10 dias, confidencialidade NDA, foco riscos regulatórios e trabalhistas</p>
+                <p><strong>Saída:</strong> Checklist estruturado + data room virtual + matriz de riscos por categoria</p>
+                <p><strong>Critérios:</strong> Cobertura >95% pontos críticos, classificação risco alto/médio/baixo, ações mitigatórias</p>
+            </div>
+            
+            <div id="contratos" class="example-content">
+                <h4>Análise de Contratos Comerciais</h4>
+                <span class="persona-tag">Advogado Pleno - Contratos</span>
+                <p><strong>Tarefa:</strong> Revisar e anotar 15 contratos de distribuição para multinacional farmacêutica</p>
+                <p><strong>Contexto:</strong> Expansão Brasil, contratos template adaptados, parceiros regionais diferentes estados</p>
+                <p><strong>Entradas:</strong> Contratos originais, minuta padrão aprovada, política compliance cliente</p>
+                <p><strong>Restrições:</strong> Lei brasileira, LGPD, regulação ANVISA, prazo 5 dias úteis</p>
+                <p><strong>Saída:</strong> Planilha com redlines + relatório divergências + recomendações padronização</p>
+                <p><strong>Critérios:</strong> Zero cláusulas conflitantes, 100% aderência compliance, sugestões viáveis</p>
+            </div>
+            
+            <div id="jurisprudencia" class="example-content">
+                <h4>Pesquisa Jurisprudencial Especializada</h4>
+                <span class="persona-tag">Paralegal Sênior</span>
+                <p><strong>Tarefa:</strong> Levantar jurisprudência STJ sobre desconsideração inversa personalidade jurídica</p>
+                <p><strong>Contexto:</strong> Defesa em execução, devedor PF, bens em nome empresa controlada, valor R$ 2MM</p>
+                <p><strong>Entradas:</strong> Peça adversa, estratégia processual definida, precedentes já conhecidos</p>
+                <p><strong>Restrições:</strong> Últimos 5 anos, STJ preferencialmente, casos similares estrutura societária</p>
+                <p><strong>Saída:</strong> Fichamento 20 acórdãos + matriz argumentos + minutas teses defensivas</p>
+                <p><strong>Critérios:</strong> Relevância jurídica casos, aplicabilidade ao caso concreto, fundamentação sólida</p>
+            </div>
+            
+            <div id="parecer" class="example-content">
+                <h4>Elaboração de Parecer Tributário</h4>
+                <span class="persona-tag">Sócio Júnior - Tributário</span>
+                <p><strong>Tarefa:</strong> Parecer sobre elisão fiscal em reorganização societária (incorporação reversa)</p>
+                <p><strong>Contexto:</strong> Grupo empresarial nacional, 5 empresas, objetivo otimização tributária dentro legalidade</p>
+                <p><strong>Entradas:</strong> Estrutura atual, proposta reestruturação, consultorias anteriores, legislação aplicável</p>
+                <p><strong>Restrições:</strong> Marco legal brasileiro, jurisprudência CARF, praticabilidade implementação</p>
+                <p><strong>Saída:</strong> Parecer 25-30 páginas + executive summary + cronograma implementação</p>
+                <p><strong>Critérios:</strong> Segurança jurídica >85%, viabilidade prática, economia fiscal quantificada</p>
+            </div>
+            
+            <div id="peticao" class="example-content">
+                <h4>Redação de Petição Complexa</h4>
+                <span class="persona-tag">Advogado Júnior</span>
+                <p><strong>Tarefa:</strong> Contestação em ação revisional contrato financiamento imobiliário (SFH)</p>
+                <p><strong>Contexto:</strong> Banco réu, valor R$ 800mil, alegações abusividade juros, capitalização, spread</p>
+                <p><strong>Entradas:</strong> Petição inicial, contrato financiamento, planilhas evolução saldo, jurisprudência banco</p>
+                <p><strong>Restrições:</strong> Prazo 15 dias, fundamentação técnica financeira, precedentes STJ favoráveis</p>
+                <p><strong>Saída:</strong> Contestação estruturada + planilha recálculos + jurisprudência anexa</p>
+                <p><strong>Critérios:</strong> Refutação ponto-a-ponto alegações, cálculos corretos, teses jurídicas sólidas</p>
+            </div>
+            
+            <div id="compliance" class="example-content">
+                <h4>Programa de Compliance</h4>
+                <span class="persona-tag">Sócio Sênior - Compliance</span>
+                <p><strong>Tarefa:</strong> Estruturar programa compliance anticorrupção para construtora (Lei 12.846/13)</p>
+                <p><strong>Contexto:</strong> Empresa familiar 40 anos, contratos públicos 60% receita, histórico sem problemas</p>
+                <p><strong>Entradas:</strong> Organograma, processos internos, contratos principais, política atual incipiente</p>
+                <p><strong>Restrições:</strong> Adequação Lei Anticorrupção, melhores práticas mercado, implementação gradual</p>
+                <p><strong>Saída:</strong> Manual compliance + treinamentos + procedimentos + sistema monitoramento</p>
+                <p><strong>Critérios:</strong> Aderência 100% lei, praticabilidade implementação, mensuração efetividade</p>
+            </div>
+            
+            <div id="precedentes" class="example-content">
+                <h4>Levantamento de Precedentes</h4>
+                <span class="persona-tag">Paralegal Júnior</span>
+                <p><strong>Tarefa:</strong> Compilar precedentes sobre responsabilidade plataformas digitais (Marco Civil)</p>
+                <p><strong>Contexto:</strong> Defesa e-commerce, ação danos morais, produto falsificado vendido marketplace</p>
+                <p><strong>Entradas:</strong> Processo judicial, termos de uso plataforma, casos similares conhecidos</p>
+                <p><strong>Restrições:</strong> STF, STJ, TJs principais, foco excludentes responsabilidade, últimos 3 anos</p>
+                <p><strong>Saída:</strong> Base dados precedentes + ficha resumo cada caso + linha argumentativa</p>
+                <p><strong>Critérios:</strong> Mínimo 30 precedentes, relevância alta casos, argumentos aplicáveis</p>
+            </div>
+            
+            <div id="memorando" class="example-content">
+                <h4>Memorando Jurídico Interno</h4>
+                <span class="persona-tag">Advogado Pleno - Trabalhista</span>
+                <p><strong>Tarefa:</strong> Memo sobre impactos nova legislação trabalhista para RH cliente varejo</p>
+                <p><strong>Contexto:</strong> Rede 200 lojas, 3000 funcionários, alterações MP trabalho intermitente</p>
+                <p><strong>Entradas:</strong> Legislação nova, estrutura atual RH, contratos trabalho vigentes</p>
+                <p><strong>Restrições:</strong> Linguagem acessível RH, foco implementação prática, riscos trabalhistas</p>
+                <p><strong>Saída:</strong> Memorando executivo + checklist ações + cronograma adequação</p>
+                <p><strong>Critérios:</strong> Clareza explicações, viabilidade sugestões, cronograma realista</p>
+            </div>
+            
+            <div id="viabilidade" class="example-content">
+                <h4>Análise de Viabilidade Jurídica</h4>
+                <span class="persona-tag">Sócio - Imobiliário</span>
+                <p><strong>Tarefa:</strong> Viabilidade jurídica incorporação imobiliária terreno Barra da Tijuca</p>
+                <p><strong>Contexto:</strong> Área 5000m², potencial construtivo, cliente incorporador experiente, projeto torres residenciais</p>
+                <p><strong>Entradas:</strong> Matrícula terreno, projeto preliminar, legislação urbanística, certidões</p>
+                <p><strong>Restrições:</strong> Legislação municipal RJ, ambiental, patrimonial histórico, prazo 20 dias</p>
+                <p><strong>Saída:</strong> Parecer viabilidade + matriz riscos + cronograma licenciamento</p>
+                <p><strong>Critérios:</strong> Viabilidade confirmada/condicionada/inviável, riscos mapeados, prazos realistas</p>
+            </div>
+            
+            <div id="organizacao" class="example-content">
+                <h4>Organização Processual</h4>
+                <span class="persona-tag">Paralegal - Processual</span>
+                <p><strong>Tarefa:</strong> Organizar 15 processos trabalhistas para audiência UNA próxima semana</p>
+                <p><strong>Contexto:</strong> Empresa terceirização, processos similares, estratégia defesa unificada</p>
+                <p><strong>Entradas:</strong> Autos processos, minutas defesa, jurisprudência aplicável, dados funcionários</p>
+                <p><strong>Restrições:</strong> Prazo 3 dias, documentação completa, estratégia por tipo demanda</p>
+                <p><strong>Saída:</strong> Pasta por processo + check-list audiência + argumentário unificado</p>
+                <p><strong>Critérios:</strong> Zero documentos faltantes, estratégias alinhadas, material acessível advogado</p>
+            </div>
+            
+            <div id="riscos" class="example-content">
+                <h4>Análise de Riscos Jurídicos</h4>
+                <span class="persona-tag">Advogado Sênior - Consultivo</span>
+                <p><strong>Tarefa:</strong> Mapear riscos jurídicos expansão internacional startup brasileira (EUA)</p>
+                <p><strong>Contexto:</strong> Fintech pagamentos, série A captada, mercado americano target, regulação complexa</p>
+                <p><strong>Entradas:</strong> Business plan, estrutura atual, regulação conhecida, consultores EUA</p>
+                <p><strong>Restrições:</strong> Legislação EUA federal/estadual, compliance AML, proteção dados</p>
+                <p><strong>Saída:</strong> Matriz riscos + plano mitigação + custos estimados compliance</p>
+                <p><strong>Critérios:</strong> Riscos críticos identificados, soluções viáveis, budget realista</p>
+            </div>
+            
+            <div id="estruturacao" class="example-content">
+                <h4>Estruturação de Operações</h4>
+                <span class="persona-tag">Sócio Sênior - Societário</span>
+                <p><strong>Tarefa:</strong> Estruturar joint venture entre brasileiro e alemão (setor automotivo)</p>
+                <p><strong>Contexto:</strong> Fábrica componentes, investimento €50MM, tecnologia alemã, produção Brasil</p>
+                <p><strong>Entradas:</strong> Term sheet preliminar, regulamentação setor, incentivos fiscais disponíveis</p>
+                <p><strong>Restrições:</strong> Lei brasileira, tratado Brasil-Alemanha, aprovações regulatórias CADE</p>
+                <p><strong>Saída:</strong> Estrutura societária + documentação completa + cronograma implementação</p>
+                <p><strong>Critérios:</strong> Otimização tributária, proteção investidor estrangeiro, agilidade aprovações</p>
+            </div>
+        </div>
+
+        <div class="canvas-grid">
+            <div class="canvas-item">
+                <h3><span class="icon">1</span>Tarefa/Objetivo Jurídico</h3>
+                <textarea id="tarefa" placeholder="Descreva precisamente o trabalho jurídico: analisar, redigir, pesquisar, estruturar, revisar..."></textarea>
+                <div class="hint">Ex: "Elaborar parecer sobre legalidade cláusula de não-concorrência em contrato franquia"</div>
+            </div>
+            
+            <div class="canvas-item">
+                <h3><span class="icon">2</span>Contexto & Cliente</h3>
+                <textarea id="contexto" placeholder="Cliente, setor, valores envolvidos, urgência, complexidade, histórico, posicionamento mercado"></textarea>
+                <div class="hint">Ex: "Cliente multinacional farmacêutica, contratos franquia nacional, 50 pontos, valor médio R$ 200mil/unidade"</div>
+            </div>
+            
+            <div class="canvas-item">
+                <h3><span class="icon">3</span>Materiais Disponíveis</h3>
+                <textarea id="entradas" placeholder="Contratos, processos, jurisprudência, legislação, pareceres anteriores, documentos societários"></textarea>
+                <div class="hint">Ex: "Contratos-padrão atuais, 5 pareceres anteriores sobre tema, jurisprudência TJSP recente"</div>
+            </div>
+            
+            <div class="canvas-item">
+                <h3><span class="icon">4</span>Restrições & Marco Legal</h3>
+                <textarea id="restricoes" placeholder="Legislação aplicável, jurisprudência dominante, prazos, confidencialidade, orçamento, recursos"></textarea>
+                <div class="hint">Ex: "Lei 8.955/94, jurisprudência STJ, prazo 10 dias, confidencial, orçamento até 50h advocatícias"</div>
+            </div>
+            
+            <div class="canvas-item full-width">
+                <h3><span class="icon">5</span>Formato da Entrega</h3>
+                <textarea id="saida" placeholder="Parecer estruturado, petição formatada, planilha comparativa, apresentação executiva, minuta contratual..."></textarea>
+                <div class="hint">Ex: "Parecer 10-15 páginas + executive summary 2 páginas + minuta cláusula revista"</div>
+            </div>
+            
+            <div class="canvas-item full-width">
+                <h3><span class="icon">6</span>Critérios de Qualidade</h3>
+                <textarea id="criterios" placeholder="Segurança jurídica, aplicabilidade prática, fundamentação, viabilidade econômica, riscos aceitáveis"></textarea>
+                <div class="hint">Ex: "Segurança jurídica >80%, aplicável todos contratos, custo implementação <R$ 50mil"</div>
+            </div>
+        </div>
+
+        <button class="generate-button" onclick="generatePrompt()">⚖️ Gerar Prompt Jurídico Estruturado</button>
+
+        <div class="output" id="output">
+            <h3>📋 Seu Prompt Jurídico Estruturado</h3>
+            <div class="prompt-output" id="promptOutput"></div>
+            <button class="copy-button" onclick="copyPrompt()">📋 Copiar Prompt</button>
+        </div>
+
+        <div class="contacts-section">
+            <h3>📞 Contatos</h3>
+            <p><strong>Prof. Filipe Litaiff, PhD</strong></p>
+            <p>🔗 <a href="https://www.linkedin.com/in/flitaiff/" target="_blank">LinkedIn: flitaiff</a></p>
+            <p>🌐 <a href="https://sunyataconsulting.com/" target="_blank">sunyataconsulting.com</a></p>
+            <p>📷 Instagram: @prof_filipe_litaiff</p>
+            <p>📧 contato@sunyataconsulting.com</p>
+        </div>
+
+        <div class="footer">
+            <p>Framework Sunyata para uso responsável de IA Generativa na advocacia</p>
+            <div class="copyright">
+                © 2025 <a href="https://sunyataconsulting.com/" target="_blank">sunyataconsulting.com</a> - Todos os direitos reservados
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showExample(exampleId) {
+            // Hide all examples
+            const contents = document.querySelectorAll('.example-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Hide all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected example
+            document.getElementById(exampleId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function generatePrompt() {
+            const tarefa = document.getElementById('tarefa').value.trim();
+            const contexto = document.getElementById('contexto').value.trim();
+            const entradas = document.getElementById('entradas').value.trim();
+            const restricoes = document.getElementById('restricoes').value.trim();
+            const saida = document.getElementById('saida').value.trim();
+            const criterios = document.getElementById('criterios').value.trim();
+
+            if (!tarefa || !contexto) {
+                alert('Por favor, preencha pelo menos os campos "Tarefa/Objetivo Jurídico" e "Contexto & Cliente"');
+                return;
+            }
+
+            let prompt = `Você é um advogado sênior especializado em grandes escritórios com vasta experiência em advocacia empresarial e conhecimento profundo da prática jurídica brasileira.\n\n`;
+            
+            prompt += `**TAREFA/OBJETIVO JURÍDICO:**\n${tarefa}\n\n`;
+            
+            prompt += `**CONTEXTO & CLIENTE:**\n${contexto}\n\n`;
+            
+            if (entradas) {
+                prompt += `**MATERIAIS DISPONÍVEIS:**\n${entradas}\n\n`;
+            }
+            
+            if (restricoes) {
+                prompt += `**RESTRIÇÕES & MARCO LEGAL:**\n${restricoes}\n\n`;
+            }
+            
+            if (saida) {
+                prompt += `**FORMATO DA ENTREGA:**\n${saida}\n\n`;
+            }
+            
+            if (criterios) {
+                prompt += `**CRITÉRIOS DE QUALIDADE:**\n${criterios}\n\n`;
+            }
+            
+            prompt += `**INSTRUÇÕES IMPORTANTES:**\n- Mantenha rigor técnico-jurídico e aderência às melhores práticas de grandes escritórios\n- Considere sempre aspectos práticos de implementação e viabilidade econômica\n- Base suas sugestões na legislação brasileira vigente e jurisprudência consolidada\n- Estruture sua resposta de forma profissional e diretamente aplicável\n- Se alguma informação essencial estiver ausente, questione antes de prosseguir\n\n`;
+            
+            prompt += `Faça-me perguntas indexadas, sequenciais, uma por vez até que você julgue entender o suficiente do contexto da tarefa, da qualidade esperada de sua resposta e interação comigo.`;
+
+            document.getElementById('promptOutput').textContent = prompt;
+            document.getElementById('output').classList.add('show');
+            
+            // Smooth scroll to output
+            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyPrompt() {
+            const promptText = document.getElementById('promptOutput').textContent;
+            navigator.clipboard.writeText(promptText).then(function() {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✅ Copiado!';
+                button.style.background = '#38a169';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#48bb78';
+                }, 2000);
+            });
+        }
+
+        // Auto-save functionality
+        const inputs = ['tarefa', 'contexto', 'entradas', 'restricoes', 'saida', 'criterios'];
+        inputs.forEach(id => {
+            const element = document.getElementById(id);
+            // Load saved content
+            const saved = localStorage.getItem(`canvas_juridico_${id}`);
+            if (saved) {
+                element.value = saved;
+            }
+            
+            // Save on change
+            element.addEventListener('input', () => {
+                localStorage.setItem(`canvas_juridico_${id}`, element.value);
+            });
+        });
+    </script>
+</body>
+</html>
