@@ -1,4 +1,15 @@
 <?php
+// === DIAGNÓSTICO TEMPORÁRIO - REMOVER APÓS FIX ===
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+ini_set('log_errors', '1');
+ini_set('error_log', __DIR__ . '/../../../storage/php-errors.log');
+
+echo "<!-- BOOT CHECK: Arquivo carregou -->\n";
+flush();
+// === FIM DIAGNÓSTICO ===
+
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/auth.php';
 
@@ -49,13 +60,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         // Salvar em JSONL
-        $storage_dir = __DIR__ . '/../../../storage';
-        if (!is_dir($storage_dir)) {
-            mkdir($storage_dir, 0755, true);
+        $storeFile = __DIR__ . '/../../../storage/access-requests-law.jsonl';
+        $storeDir = dirname($storeFile);
+        if (!is_dir($storeDir)) {
+            mkdir($storeDir, 0775, true);
         }
 
         file_put_contents(
-            $storage_dir . '/access-requests-law.jsonl',
+            $storeFile,
             json_encode($payload, JSON_UNESCAPED_UNICODE) . PHP_EOL,
             FILE_APPEND | LOCK_EX
         );
