@@ -82,8 +82,9 @@ define('VERTICALS', [
 
 // Helper functions
 function require_login() {
-    if (!isset($_SESSION['user_id'])) {
-        header('Location: ' . BASE_URL . '/index.php');
+    // Verifica se o usuário está logado (compatível com auth.php)
+    if (!isset($_SESSION['user'])) {
+        header('Location: ' . BASE_URL . '/index.php?m=login_required');
         exit;
     }
 }
