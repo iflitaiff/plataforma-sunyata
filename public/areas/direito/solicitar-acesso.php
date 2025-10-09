@@ -11,14 +11,18 @@ flush();
 // === FIM DIAGNÓSTICO ===
 
 require_once __DIR__ . '/../../../config/config.php';
+echo "<!-- CHECKPOINT 1: config.php carregado -->\n"; flush();
 require_once __DIR__ . '/../../../config/auth.php';
+echo "<!-- CHECKPOINT 2: auth.php carregado -->\n"; flush();
 
 require_login();
+echo "<!-- CHECKPOINT 3: require_login() passou -->\n"; flush();
 
 // Variáveis de feedback
 $feedback = null;
 $feedback_type = null;
 
+echo "<!-- CHECKPOINT 4: lógica POST -->\n"; flush();
 // Processar POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar campos
@@ -117,8 +121,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+echo "<!-- CHECKPOINT 5: antes navbar -->\n"; flush();
 // Incluir navbar
 include __DIR__ . '/../../../src/views/navbar.php';
+echo "<!-- CHECKPOINT 6: navbar incluído -->\n"; flush();
 ?>
 
 <!DOCTYPE html>
