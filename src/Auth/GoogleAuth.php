@@ -181,6 +181,16 @@ class GoogleAuth {
         $_SESSION['access_level'] = $user['access_level'];
         $_SESSION['logged_in_at'] = time();
 
+        // Set user array for compatibility with require_login() and other checks
+        $_SESSION['user'] = [
+            'id' => $user['id'],
+            'email' => $user['email'],
+            'name' => $user['name'],
+            'picture' => $user['picture'],
+            'google_id' => $user['google_id'],
+            'access_level' => $user['access_level']
+        ];
+
         // Store session in database
         $this->storeSession($user['id']);
     }
@@ -238,7 +248,7 @@ class GoogleAuth {
      * Check if user is logged in
      */
     public function isLoggedIn() {
-        return isset($_SESSION['user_id']);
+        return isset($_SESSION['user']) && isset($_SESSION['user_id']);
     }
 
     /**
