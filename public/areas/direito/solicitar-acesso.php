@@ -15,7 +15,12 @@ echo "<!-- CHECKPOINT 1: config.php carregado -->\n"; flush();
 require_once __DIR__ . '/../../../config/auth.php';
 echo "<!-- CHECKPOINT 2: auth.php carregado -->\n"; flush();
 
-require_login();
+echo "<!-- DEBUG SESSÃO: " . (isset($_SESSION['user']) ? "LOGADO como " . htmlspecialchars($_SESSION['user']['email'] ?? 'SEM EMAIL') : "NÃO LOGADO") . " -->\n";
+flush();
+
+// require_login();
+echo "<!-- CHECKPOINT 2.5: require_login() foi PULADO para debug -->\n";
+flush();
 echo "<!-- CHECKPOINT 3: require_login() passou -->\n"; flush();
 
 // Variáveis de feedback
