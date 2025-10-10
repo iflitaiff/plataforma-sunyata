@@ -30,8 +30,12 @@ plataforma-sunyata/
 │   └── views/          # Componentes de view (navbar)
 ├── config/
 │   ├── config.php      # Configuração principal
+│   ├── secrets.php     # Credenciais (não versionar!)
 │   ├── secrets.php.example
 │   └── database.sql    # Schema do banco
+├── vendor/              # Dependências (gerado pelo Composer)
+├── composer.json        # Gerenciamento de dependências
+├── composer.lock        # Versões travadas
 └── README.md
 ```
 
@@ -40,8 +44,14 @@ plataforma-sunyata/
 ### Pré-requisitos
 
 - Hospedagem Hostinger Premium
-- PHP 8.0+
+- PHP 8.0+ com extensões:
+  - `ext-curl` (requisições OAuth)
+  - `ext-json` (manipulação de dados)
+  - `ext-pdo` e `ext-pdo_mysql` (banco de dados)
+  - `ext-mbstring` (strings UTF-8)
+  - `ext-session` (gerenciamento de sessões)
 - MySQL 5.7+ ou MariaDB 10.2+
+- Composer 2.0+ (gerenciador de dependências PHP)
 - Acesso SSH
 - Domínio configurado: `portal.sunyataconsulting.com`
 
@@ -54,7 +64,19 @@ git clone <seu-repositorio> plataforma-sunyata
 cd plataforma-sunyata
 ```
 
-### Passo 2: Configurar Document Root
+### Passo 2: Instalar Dependências
+
+```bash
+# Instalar dependências PHP via Composer
+composer install --no-dev --optimize-autoloader
+
+# Verificar se as extensões PHP estão ativas
+php -m | grep -E 'curl|json|pdo|mbstring|session'
+```
+
+> **Nota**: O Hostinger geralmente já tem o Composer instalado. Se não tiver, [veja como instalar](https://getcomposer.org/download/).
+
+### Passo 3: Configurar Document Root
 
 No painel do Hostinger:
 1. Acesse **Websites** > **Gerenciar**
@@ -71,16 +93,64 @@ No painel do Hostinger:
 mysql -u seu_usuario -p nome_do_banco < config/database.sql
 ```
 
-### Passo 4: Configurar Credenciais Google OAuth
+### Passo 4: Configurar Google OAuth
+
+#### 4.1. Criar Projeto no Google Cloud
 
 1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
-2. Crie um projeto novo
-3. Ative **Google+ API**
-4. Vá em **Credenciais** > **Criar credenciais** > **ID do cliente OAuth**
-5. Configure:
-   - Tipo: Aplicativo da Web
-   - URIs de redirecionamento: `https://portal.sunyataconsulting.com/callback.php`
-6. Copie **Client ID** e **Client Secret**
+2. Clique em **Select a project** > **New Project**
+3. Nome do projeto: "Plataforma Sunyata"
+4. Clique em **Create**
+
+#### 4.2. Ativar APIs Necessárias
+
+1. No menu lateral, vá em **APIs & Services** > **Library**
+2. Busque por "**Google People API**" e clique em **Enable**
+3. Busque por "**OAuth 2.0**" (geralmente já está ativo)
+
+#### 4.3. Configurar Tela de Consentimento OAuth
+
+1. Vá em **APIs & Services** > **OAuth consent screen**
+2. Selecione **External** (para permitir qualquer conta Google)
+3. Preencha:
+   - **App name**: Plataforma Sunyata
+   - **User support email**: seu email
+   - **Developer contact**: seu email
+4. Clique em **Save and Continue**
+5. Em **Scopes**, adicione:
+   - `.../auth/userinfo.email`
+   - `.../auth/userinfo.profile`
+   - `openid`
+6. Clique em **Save and Continue**
+7. Em **Test users**, adicione seu email para testes
+8. Clique em **Save and Continue**
+
+#### 4.4. Criar Credenciais OAuth
+
+1. Vá em **APIs & Services** > **Credentials**
+2. Clique em **+ CREATE CREDENTIALS** > **OAuth client ID**
+3. Selecione **Application type**: Web application
+4. Configure:
+   - **Name**: Plataforma Sunyata Web Client
+   - **Authorized JavaScript origins**:
+     - `https://portal.sunyataconsulting.com`
+   - **Authorized redirect URIs**:
+     - `https://portal.sunyataconsulting.com/callback.php`
+5. Clique em **Create**
+6. **IMPORTANTE**: Copie e guarde:
+   - **Client ID** (formato: `xxxxx.apps.googleusercontent.com`)
+   - **Client Secret**
+
+> **⚠️ Segurança**: Nunca compartilhe ou versione o Client Secret!
+
+#### 4.5. Publicar App (Após Testes)
+
+Quando estiver pronto para produção:
+1. Volte em **OAuth consent screen**
+2. Clique em **PUBLISH APP**
+3. Confirme a publicação
+
+Enquanto em modo teste, apenas os emails em "Test users" poderão fazer login.
 
 ### Passo 5: Configurar Secrets
 
@@ -260,11 +330,91 @@ Verifique `config/secrets.php`:
 - Credenciais do banco
 - Banco existe e schema foi importado
 
-### Erro "Failed to get access token"
+```bash
+# Testar conexão com o banco
+php -r "new PDO('mysql:host=localhost;dbname=seu_banco', 'usuario', 'senha');"
+```
 
-- Verifique Google Client ID e Secret
-- Confirme URI de redirecionamento no Google Console
-- Teste se domínio está com SSL ativo
+### Problemas com Google OAuth
+
+#### Erro "redirect_uri_mismatch"
+
+**Causa**: URI de redirecionamento não corresponde ao configurado no Google Console.
+
+**Solução**:
+1. Acesse [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials)
+2. Clique no OAuth Client ID criado
+3. Verifique que em **Authorized redirect URIs** está exatamente:
+   ```
+   https://portal.sunyataconsulting.com/callback.php
+   ```
+4. **NÃO use** `http://` (precisa ser `https://`)
+5. **NÃO use** `www.` no domínio (a menos que seja seu domínio real)
+6. Salve e aguarde 5 minutos para propagar
+
+#### Erro "Failed to get access token"
+
+**Possíveis causas**:
+
+1. **Client ID ou Secret incorretos**
+   ```bash
+   # Verifique em config/secrets.php
+   grep GOOGLE_CLIENT config/secrets.php
+   ```
+
+2. **SSL não está ativo**
+   ```bash
+   # Teste se o domínio tem certificado válido
+   curl -I https://portal.sunyataconsulting.com
+   ```
+   Se retornar erro SSL, ative o certificado no painel Hostinger.
+
+3. **App está em modo teste e usuário não está na lista**
+   - Vá em **OAuth consent screen** > **Test users**
+   - Adicione o email que está tentando fazer login
+   - OU publique o app (botão **PUBLISH APP**)
+
+#### Erro "Access blocked: This app's request is invalid"
+
+**Causa**: Scopes do OAuth não foram configurados.
+
+**Solução**:
+1. Vá em **OAuth consent screen** > **Edit App**
+2. Na aba **Scopes**, adicione:
+   - `.../auth/userinfo.email`
+   - `.../auth/userinfo.profile`
+   - `openid`
+3. Salve e teste novamente
+
+#### Erro "Error 400: admin_policy_enforced"
+
+**Causa**: Seu domínio Google Workspace tem restrições de OAuth.
+
+**Solução**:
+1. Admin precisa autorizar o app no Console Admin do Workspace
+2. OU use uma conta Gmail pessoal para testes
+
+#### Usuário faz login mas cai em loop
+
+**Causa**: Sessões não estão sendo salvas.
+
+**Solução**:
+```bash
+# Verifique permissões do diretório de logs
+chmod 755 logs/
+
+# Teste se sessões funcionam
+php -r "session_start(); \$_SESSION['test']=1; echo 'OK';"
+```
+
+### Erro "Failed to get user info"
+
+**Causa**: Google People API não está ativada.
+
+**Solução**:
+1. Vá em [API Library](https://console.cloud.google.com/apis/library)
+2. Busque "Google People API"
+3. Clique em **Enable**
 
 ### Página em branco
 
@@ -279,9 +429,14 @@ Verifique `logs/php_errors.log`
 
 ### Sessão não persiste
 
-Verifique permissões:
+Já está coberto na seção "Usuário faz login mas cai em loop" acima.
+
+### Composer não encontrado no Hostinger
+
 ```bash
-chmod 755 logs
+# Instalar Composer localmente
+curl -sS https://getcomposer.org/installer | php
+php composer.phar install --no-dev --optimize-autoloader
 ```
 
 ## 📞 Suporte

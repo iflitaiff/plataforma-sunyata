@@ -1,10 +1,3 @@
--- Plataforma Sunyata - Database Schema
--- MySQL 5.7+ / MariaDB 10.2+
-
-CREATE DATABASE IF NOT EXISTS sunyata_platform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE sunyata_platform;
-
--- Users table
 CREATE TABLE users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     google_id VARCHAR(255) UNIQUE NOT NULL,

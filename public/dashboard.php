@@ -166,72 +166,143 @@ $pageTitle = 'Dashboard';
                 </div>
             </div>
 
-            <!-- Ferramentas Section -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h3 class="mb-3">Ferramentas</h3>
-                </div>
-            </div>
+            <!-- Vertical Info -->
+            <?php
+            $user_vertical = $_SESSION['user']['selected_vertical'] ?? null;
+            $is_demo = $_SESSION['user']['is_demo'] ?? false;
+            $is_admin = ($currentUser['access_level'] === 'admin');
+            $completed_onboarding = $_SESSION['user']['completed_onboarding'] ?? false;
 
-            <div class="row g-4 mb-5">
-                <div class="col-md-3">
-                    <div class="card h-100 border-primary">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="flex-shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-book text-primary" viewBox="0 0 16 16">
-                                        <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
-                                    </svg>
+            // Nomes amigáveis e ícones das verticais
+            $verticals_info = [
+                'docencia' => ['nome' => 'Docência', 'icone' => '👩‍🏫', 'disponivel' => true],
+                'pesquisa' => ['nome' => 'Pesquisa', 'icone' => '🔬', 'disponivel' => true],
+                'ifrj_alunos' => ['nome' => 'IFRJ - Alunos', 'icone' => '🎓', 'disponivel' => true],
+                'juridico' => ['nome' => 'Jurídico', 'icone' => '⚖️', 'disponivel' => true],
+                'vendas' => ['nome' => 'Vendas', 'icone' => '📈', 'disponivel' => false],
+                'marketing' => ['nome' => 'Marketing', 'icone' => '📢', 'disponivel' => false],
+                'licitacoes' => ['nome' => 'Licitações', 'icone' => '📋', 'disponivel' => false],
+                'rh' => ['nome' => 'Recursos Humanos', 'icone' => '👥', 'disponivel' => false],
+                'geral' => ['nome' => 'Geral', 'icone' => '🌐', 'disponivel' => false]
+            ];
+            ?>
+
+            <?php if ($is_admin): ?>
+                <!-- Admin: Vertical Selector -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-primary">
+                            <strong>👑 Modo Administrador:</strong> Você tem acesso a todas as verticais.
+                            <span class="float-end">
+                                <a href="<?= BASE_URL ?>/admin/" class="btn btn-sm btn-dark">
+                                    🛠️ Painel Admin
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3 class="mb-3">Selecione uma Vertical para Explorar</h3>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-5">
+                    <?php foreach ($verticals_info as $slug => $info): ?>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="<?= BASE_URL ?>/areas/<?= $slug ?>/" class="text-decoration-none">
+                                <div class="card h-100 <?= $info['disponivel'] ? 'border-primary' : 'border-secondary' ?>">
+                                    <div class="card-body text-center">
+                                        <div style="font-size: 3rem;" class="mb-2"><?= $info['icone'] ?></div>
+                                        <h5 class="card-title"><?= $info['nome'] ?></h5>
+                                        <?php if (!$info['disponivel']): ?>
+                                            <span class="badge bg-warning text-dark">Em breve</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h5 class="card-title mb-0">Dicionário de Prompts</h5>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php elseif ($user_vertical): ?>
+                <!-- Regular User: Show Their Vertical -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <strong>📍 Sua Vertical:</strong> <?= $verticals_info[$user_vertical]['nome'] ?? ucfirst($user_vertical) ?>
+                            <?php if ($is_demo): ?>
+                                <span class="badge bg-warning ms-2">Modo Demo</span>
+                            <?php endif; ?>
+                            <span class="float-end">
+                                <a href="<?= BASE_URL ?>/areas/<?= $user_vertical ?>/" class="btn btn-sm btn-primary">
+                                    Ir para Área da Vertical →
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            <?php elseif (!$completed_onboarding): ?>
+                <!-- No Vertical: Prompt Onboarding -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Onboarding Pendente:</strong> Complete seu perfil para acessar as ferramentas.
+                            <a href="<?= BASE_URL ?>/onboarding-step1.php" class="btn btn-sm btn-warning ms-3">
+                                Completar Agora
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!$is_admin): ?>
+                <!-- Ferramentas Section (apenas para usuários regulares) -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h3 class="mb-3">Suas Ferramentas</h3>
+                    </div>
+                </div>
+
+                <?php
+                $user_tools = function_exists('get_user_tools') ? get_user_tools() : [];
+                ?>
+
+                <?php if (empty($user_tools)): ?>
+                    <div class="row mb-5">
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <h4>👋 Nenhuma ferramenta disponível ainda</h4>
+                                <p>Complete o onboarding para ter acesso às ferramentas da plataforma.</p>
+                                <?php if (!$completed_onboarding): ?>
+                                    <a href="<?= BASE_URL ?>/onboarding-step1.php" class="btn btn-primary">
+                                        Começar Onboarding
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="row g-4 mb-5">
+                        <?php foreach ($user_tools as $tool): ?>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card h-100 border-primary">
+                                    <div class="card-body">
+                                        <div class="text-center mb-3">
+                                            <span style="font-size: 40px;"><?= $tool['icone'] ?></span>
+                                        </div>
+                                        <h5 class="card-title text-center mb-3"><?= sanitize_output($tool['nome']) ?></h5>
+                                        <p class="card-text text-muted text-center"><?= sanitize_output($tool['descricao']) ?></p>
+                                        <div class="d-grid">
+                                            <a href="<?= $tool['url'] ?>" class="btn btn-primary">Acessar</a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="card-text">Acesse centenas de templates prontos para uso</p>
-                            <a href="<?= BASE_URL ?>/dicionario.php" class="btn btn-primary">Acessar</a>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card h-100 border-primary">
-                        <div class="card-body">
-                            <div class="text-center mb-3">
-                                <span style="font-size: 32px;">📚</span>
-                            </div>
-                            <h5 class="card-title mb-3">Canvas de Delimitação - Docentes</h5>
-                            <p class="card-text">Crie prompts estruturados para atividades docentes</p>
-                            <a href="<?= BASE_URL ?>/ferramentas/canvas-docente.html" class="btn btn-primary">Acessar</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card h-100 border-primary">
-                        <div class="card-body">
-                            <div class="text-center mb-3">
-                                <span style="font-size: 32px;">⚖️</span>
-                            </div>
-                            <h5 class="card-title mb-3">Canvas de Delimitação - Jurídico</h5>
-                            <p class="card-text">Transforme demandas jurídicas em instruções precisas</p>
-                            <a href="<?= BASE_URL ?>/ferramentas/canvas-juridico.html" class="btn btn-primary">Acessar</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card h-100 border-primary">
-                        <div class="card-body">
-                            <div class="text-center mb-3">
-                                <span style="font-size: 32px;">🔬</span>
-                            </div>
-                            <h5 class="card-title mb-3">Canvas de Delimitação - Pesquisa</h5>
-                            <p class="card-text">Estruture tarefas de pesquisa acadêmica</p>
-                            <a href="<?= BASE_URL ?>/ferramentas/canvas-pesquisa.html" class="btn btn-primary">Acessar</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <?php endif; ?>
+            <?php endif; ?>
 
             <!-- Other Services Section -->
             <div class="row mb-4">

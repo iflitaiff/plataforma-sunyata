@@ -38,12 +38,23 @@ if (!$result['success']) {
 
 $user = $result['user'];
 
+// Check if user needs to complete onboarding
+if (!$user['completed_onboarding']) {
+    redirect(BASE_URL . '/onboarding-step1.php');
+}
+
 // Check if user needs to accept terms
 if ($consentManager->needsConsent($user['id'], 'terms_of_use')) {
     $_SESSION['needs_consent'] = true;
     redirect(BASE_URL . '/dashboard.php?consent=required');
 }
 
-// Successful login
+// Successful login - redirect based on vertical
+$vertical = $user['selected_vertical'] ?? null;
 $_SESSION['success'] = 'Login realizado com sucesso!';
-redirect(BASE_URL . '/dashboard.php');
+
+if ($vertical && file_exists(__DIR__ . "/areas/{$vertical}/index.php")) {
+    redirect(BASE_URL . "/areas/{$vertical}/");
+} else {
+    redirect(BASE_URL . '/dashboard.php');
+}

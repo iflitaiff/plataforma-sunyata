@@ -188,7 +188,9 @@ class GoogleAuth {
             'name' => $user['name'],
             'picture' => $user['picture'],
             'google_id' => $user['google_id'],
-            'access_level' => $user['access_level']
+            'access_level' => $user['access_level'],
+            'completed_onboarding' => $user['completed_onboarding'] ?? false,
+            'selected_vertical' => $user['selected_vertical'] ?? null
         ];
 
         // Store session in database
