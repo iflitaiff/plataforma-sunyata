@@ -5,6 +5,59 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.0.1-mobile] - 2025-10-12
+
+### ✨ Adicionado
+
+#### Responsividade Mobile Completa
+- **Componentes Admin Reutilizáveis**:
+  - `admin-header.php`: Header responsivo com menu hamburger para mobile
+  - `admin-footer.php`: Footer compartilhado para todas as páginas admin
+- **Menu Offcanvas Mobile**: Menu lateral que desliza em telas pequenas (Bootstrap 5)
+- **Detecção Automática de Página Ativa**: Destaque visual da página atual no menu
+- **Badge de Solicitações Pendentes**: Visível tanto no desktop quanto no mobile
+
+#### Admin Pages - Mobile Optimized
+- **Dashboard** (`index.php`):
+  - Cards de estatísticas responsivos (col-md-6 col-xl-3)
+  - Tabela de últimos acessos: email oculto em mobile, mostrado sob o nome
+  - Layout otimizado para 320px até 1920px+
+
+- **Usuários** (`users.php`):
+  - Tabela progressivamente responsiva
+  - Mobile (320px): Nome + Nível visíveis, email mostrado abaixo do nome
+  - Tablet (768px): Adiciona coluna de email
+  - Desktop (1200px+): Mostra todas as 8 colunas
+  - Wrapper `.table-responsive` com scroll horizontal touch-friendly
+
+- **Solicitações de Acesso** (`access-requests.php`):
+  - Layout baseado em cards funciona bem em todos os tamanhos
+  - Botões empilham verticalmente em mobile (col-6 cada)
+  - Botões de ação mostram apenas ícones em telas pequenas
+  - Campos de formulário em largura total no mobile
+
+- **Logs de Auditoria** (`audit-logs.php`):
+  - Ocultação inteligente de colunas baseada no tamanho da tela
+  - Mobile: Apenas Data/Hora + Ação visíveis
+  - Nome do usuário mostrado abaixo da data em mobile
+  - Paginação usa setas ao invés de texto em telas pequenas
+
+### 🔧 Melhorias
+
+- **Progressive Enhancement**: Funcionalidade core funciona em todos os dispositivos
+- **Touch-Friendly**: Áreas de toque maiores, espaçamento adequado
+- **Utilidades Bootstrap 5**: Uso extensivo de `d-none`, `d-md-table-cell`, etc.
+- **Performance**: Nenhum JavaScript customizado, apenas Bootstrap nativo
+
+### 📱 Suporte de Dispositivos
+
+- ✅ Smartphones (320px - 767px)
+- ✅ Tablets (768px - 1199px)
+- ✅ Desktops (1200px+)
+- ✅ Telas grandes (1920px+)
+
+---
+
 ## [1.0.0-mvp] - 2025-10-10
 
 ### 🎉 Lançamento MVP - Sistema de Verticais Completo
