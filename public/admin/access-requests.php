@@ -270,26 +270,28 @@ include __DIR__ . '/../../src/views/admin-header.php';
                     <?php endforeach; ?>
                 <?php endif; ?>
 
-    <!-- Hidden Form -->
-    <form id="action-form" method="POST" style="display: none;">
-        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-        <input type="hidden" name="action" id="action-input">
-        <input type="hidden" name="request_id" id="request-id-input">
-        <input type="hidden" name="notes" id="notes-input">
-    </form>
-
-    <script>
-        function processRequest(requestId, action) {
-            const notes = document.getElementById('notes-' + requestId).value;
-            const actionText = action === 'approve' ? 'aprovar' : 'rejeitar';
-
-            if (confirm(`Tem certeza que deseja ${actionText} esta solicitação?`)) {
-                document.getElementById('action-input').value = action;
-                document.getElementById('request-id-input').value = requestId;
-                document.getElementById('notes-input').value = notes;
-                document.getElementById('action-form').submit();
-            }
-        }
-    </script>
-
 <?php include __DIR__ . '/../../src/views/admin-footer.php'; ?>
+
+<!-- Hidden Form -->
+<form id="action-form" method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+    <input type="hidden" name="action" id="action-input">
+    <input type="hidden" name="request_id" id="request-id-input">
+    <input type="hidden" name="notes" id="notes-input">
+</form>
+
+<script>
+    function processRequest(requestId, action) {
+        const notes = document.getElementById('notes-' + requestId).value;
+        const actionText = action === 'approve' ? 'aprovar' : 'rejeitar';
+
+        if (confirm(`Tem certeza que deseja ${actionText} esta solicitação?`)) {
+            document.getElementById('action-input').value = action;
+            document.getElementById('request-id-input').value = requestId;
+            document.getElementById('notes-input').value = notes;
+            document.getElementById('action-form').submit();
+        }
+    }
+</script>
+</body>
+</html>
