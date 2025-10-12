@@ -72,92 +72,10 @@ $stats['recent_logins'] = $db->fetchAll("
 ");
 
 $pageTitle = 'Admin Dashboard';
+
+// Include responsive header
+include __DIR__ . '/../../src/views/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?> - <?= APP_NAME ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        .stat-card {
-            transition: transform 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        .admin-sidebar {
-            min-height: calc(100vh - 56px);
-            background: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-        }
-        .admin-nav-link {
-            color: #495057;
-            padding: 0.75rem 1rem;
-            display: block;
-            text-decoration: none;
-            border-radius: 0.375rem;
-            margin-bottom: 0.25rem;
-        }
-        .admin-nav-link:hover {
-            background: #e9ecef;
-            color: #212529;
-        }
-        .admin-nav-link.active {
-            background: #0d6efd;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="<?= BASE_URL ?>/admin/">
-                <i class="bi bi-shield-lock"></i> Admin - <?= APP_NAME ?>
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="<?= BASE_URL ?>/dashboard.php">
-                    <i class="bi bi-box-arrow-left"></i> Voltar ao Portal
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 px-0 admin-sidebar">
-                <div class="p-3">
-                    <h6 class="text-muted text-uppercase small mb-3">Menu</h6>
-                    <a href="<?= BASE_URL ?>/admin/" class="admin-nav-link active">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="<?= BASE_URL ?>/admin/users.php" class="admin-nav-link">
-                        <i class="bi bi-people"></i> Usuários
-                    </a>
-                    <a href="<?= BASE_URL ?>/admin/access-requests.php" class="admin-nav-link">
-                        <i class="bi bi-key"></i> Solicitações
-                        <?php if ($stats['pending_requests'] > 0): ?>
-                            <span class="badge bg-danger"><?= $stats['pending_requests'] ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <a href="<?= BASE_URL ?>/admin/audit-logs.php" class="admin-nav-link">
-                        <i class="bi bi-journal-text"></i> Logs de Auditoria
-                    </a>
-                    <hr>
-                    <h6 class="text-muted text-uppercase small mb-3">Configurações</h6>
-                    <a href="<?= BASE_URL ?>/admin/verticals.php" class="admin-nav-link">
-                        <i class="bi bi-grid"></i> Verticais
-                        <span class="badge bg-secondary">Em breve</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 px-4 py-4">
                 <h1 class="mb-4">Dashboard de Administração</h1>
 
                 <!-- Stats Cards -->
@@ -293,22 +211,25 @@ $pageTitle = 'Admin Dashboard';
                                 <thead>
                                     <tr>
                                         <th>Usuário</th>
-                                        <th>Email</th>
+                                        <th class="d-none d-md-table-cell">Email</th>
                                         <th>Nível</th>
-                                        <th>Último Acesso</th>
+                                        <th class="d-none d-sm-table-cell">Último Acesso</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($stats['recent_logins'] as $user): ?>
                                         <tr>
-                                            <td><?= sanitize_output($user['name']) ?></td>
-                                            <td><?= sanitize_output($user['email']) ?></td>
+                                            <td>
+                                                <?= sanitize_output($user['name']) ?>
+                                                <div class="d-md-none small text-muted"><?= sanitize_output($user['email']) ?></div>
+                                            </td>
+                                            <td class="d-none d-md-table-cell"><?= sanitize_output($user['email']) ?></td>
                                             <td>
                                                 <span class="badge bg-<?= $user['access_level'] === 'admin' ? 'danger' : 'secondary' ?>">
                                                     <?= $user['access_level'] ?>
                                                 </span>
                                             </td>
-                                            <td><?= date('d/m/Y H:i', strtotime($user['last_login'])) ?></td>
+                                            <td class="d-none d-sm-table-cell"><?= date('d/m/Y H:i', strtotime($user['last_login'])) ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -316,10 +237,5 @@ $pageTitle = 'Admin Dashboard';
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include __DIR__ . '/../../src/views/admin-footer.php'; ?>

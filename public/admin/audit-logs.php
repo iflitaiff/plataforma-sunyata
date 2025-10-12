@@ -50,77 +50,11 @@ $logs = $db->fetchAll($sql, $params);
 $actions = $db->fetchAll("SELECT DISTINCT action FROM audit_logs ORDER BY action");
 
 $pageTitle = 'Logs de Auditoria - Admin';
+$stats['pending_requests'] = $db->fetchOne("SELECT COUNT(*) as count FROM vertical_access_requests WHERE status = 'pending'")['count'];
+
+// Include responsive header
+include __DIR__ . '/../../src/views/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?> - <?= APP_NAME ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        .admin-sidebar {
-            min-height: calc(100vh - 56px);
-            background: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-        }
-        .admin-nav-link {
-            color: #495057;
-            padding: 0.75rem 1rem;
-            display: block;
-            text-decoration: none;
-        }
-        .admin-nav-link:hover, .admin-nav-link.active {
-            background: #e9ecef;
-            color: #212529;
-        }
-        .details-cell {
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="<?= BASE_URL ?>/admin/">
-                <i class="bi bi-shield-lock"></i> Admin - <?= APP_NAME ?>
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="<?= BASE_URL ?>/dashboard.php">
-                    <i class="bi bi-box-arrow-left"></i> Voltar ao Portal
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 px-0 admin-sidebar">
-                <div class="p-3">
-                    <h6 class="text-muted text-uppercase small mb-3">Menu</h6>
-                    <a href="<?= BASE_URL ?>/admin/" class="admin-nav-link">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="<?= BASE_URL ?>/admin/users.php" class="admin-nav-link">
-                        <i class="bi bi-people"></i> Usuários
-                    </a>
-                    <a href="<?= BASE_URL ?>/admin/access-requests.php" class="admin-nav-link">
-                        <i class="bi bi-key"></i> Solicitações
-                    </a>
-                    <a href="<?= BASE_URL ?>/admin/audit-logs.php" class="admin-nav-link active">
-                        <i class="bi bi-journal-text"></i> Logs de Auditoria
-                    </a>
-                </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 px-4 py-4">
                 <h1 class="mb-4">Logs de Auditoria</h1>
 
                 <!-- Filters -->
@@ -153,13 +87,13 @@ $pageTitle = 'Logs de Auditoria - Admin';
                             <table class="table table-sm table-hover">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th class="d-none d-lg-table-cell">ID</th>
                                         <th>Data/Hora</th>
-                                        <th>Usuário</th>
+                                        <th class="d-none d-md-table-cell">Usuário</th>
                                         <th>Ação</th>
-                                        <th>Entidade</th>
-                                        <th>IP</th>
-                                        <th>Detalhes</th>
+                                        <th class="d-none d-xl-table-cell">Entidade</th>
+                                        <th class="d-none d-lg-table-cell">IP</th>
+                                        <th class="d-none d-xl-table-cell">Detalhes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -172,9 +106,14 @@ $pageTitle = 'Logs de Auditoria - Admin';
                                     <?php else: ?>
                                         <?php foreach ($logs as $log): ?>
                                             <tr>
-                                                <td><?= $log['id'] ?></td>
-                                                <td><?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?></td>
+                                                <td class="d-none d-lg-table-cell"><?= $log['id'] ?></td>
                                                 <td>
+                                                    <small><?= date('d/m H:i', strtotime($log['created_at'])) ?></small>
+                                                    <?php if ($log['user_name']): ?>
+                                                        <div class="d-md-none small text-muted"><?= sanitize_output($log['user_name']) ?></div>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="d-none d-md-table-cell">
                                                     <?php if ($log['user_name']): ?>
                                                         <small>
                                                             <?= sanitize_output($log['user_name']) ?><br>
@@ -185,15 +124,15 @@ $pageTitle = 'Logs de Auditoria - Admin';
                                                     <?php endif; ?>
                                                 </td>
                                                 <td><code class="small"><?= sanitize_output($log['action']) ?></code></td>
-                                                <td>
+                                                <td class="d-none d-xl-table-cell">
                                                     <?php if ($log['entity_type']): ?>
                                                         <small><?= sanitize_output($log['entity_type']) ?> #<?= $log['entity_id'] ?></small>
                                                     <?php else: ?>
                                                         -
                                                     <?php endif; ?>
                                                 </td>
-                                                <td><small><?= sanitize_output($log['ip_address'] ?? '-') ?></small></td>
-                                                <td class="details-cell">
+                                                <td class="d-none d-lg-table-cell"><small><?= sanitize_output($log['ip_address'] ?? '-') ?></small></td>
+                                                <td class="d-none d-xl-table-cell" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                                     <?php if ($log['details']): ?>
                                                         <small class="text-muted"><?= sanitize_output($log['details']) ?></small>
                                                     <?php else: ?>
@@ -212,27 +151,28 @@ $pageTitle = 'Logs de Auditoria - Admin';
                 <!-- Pagination -->
                 <div class="mt-3">
                     <nav>
-                        <ul class="pagination">
+                        <ul class="pagination justify-content-center">
                             <?php
                             $current_page = (int)($_GET['page'] ?? 0);
                             if ($current_page > 0):
                             ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?= $current_page - 1 ?><?= $filter_action ? '&action=' . urlencode($filter_action) : '' ?>">Anterior</a>
+                                    <a class="page-link" href="?page=<?= $current_page - 1 ?><?= $filter_action ? '&action=' . urlencode($filter_action) : '' ?>">
+                                        <span class="d-none d-sm-inline">Anterior</span>
+                                        <span class="d-inline d-sm-none">&laquo;</span>
+                                    </a>
                                 </li>
                             <?php endif; ?>
                             <?php if (count($logs) === $limit): ?>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=<?= $current_page + 1 ?><?= $filter_action ? '&action=' . urlencode($filter_action) : '' ?>">Próxima</a>
+                                    <a class="page-link" href="?page=<?= $current_page + 1 ?><?= $filter_action ? '&action=' . urlencode($filter_action) : '' ?>">
+                                        <span class="d-none d-sm-inline">Próxima</span>
+                                        <span class="d-inline d-sm-none">&raquo;</span>
+                                    </a>
                                 </li>
                             <?php endif; ?>
                         </ul>
                     </nav>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include __DIR__ . '/../../src/views/admin-footer.php'; ?>
