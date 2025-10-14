@@ -11,6 +11,7 @@ session_name(SESSION_NAME);
 session_start();
 
 use Sunyata\Core\Database;
+use Sunyata\Core\Settings;
 
 require_login();
 
@@ -21,6 +22,30 @@ if (!isset($_SESSION['user']['access_level']) || $_SESSION['user']['access_level
 }
 
 $db = Database::getInstance();
+$settings = Settings::getInstance();
+
+// Handle settings toggle
+$message = '';
+$message_type = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        $message = 'Token de segurança inválido';
+        $message_type = 'danger';
+    } else {
+        $action = $_POST['action'];
+
+        if ($action === 'toggle_juridico_approval') {
+            $newValue = $settings->toggle('juridico_requires_approval', $_SESSION['user_id']);
+            $statusText = $newValue ? 'ATIVADA' : 'DESATIVADA';
+            $message = "Aprovação Jurídico {$statusText} com sucesso!";
+            $message_type = 'success';
+        }
+    }
+}
+
+// Ler configurações atuais
+$juridico_requires_approval = $settings->get('juridico_requires_approval', true);
 
 // Estatísticas
 $stats = [];
@@ -77,6 +102,44 @@ $pageTitle = 'Admin Dashboard';
 include __DIR__ . '/../../src/views/admin-header.php';
 ?>
                 <h1 class="mb-4">Dashboard de Administração</h1>
+
+                <?php if ($message): ?>
+                    <div class="alert alert-<?= $message_type ?> alert-dismissible fade show">
+                        <?= sanitize_output($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Quick Settings -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-sliders"></i> Configurações Rápidas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-1">⚖️ Aprovação Vertical Jurídico</h6>
+                                <p class="mb-0 text-muted small">
+                                    <?php if ($juridico_requires_approval): ?>
+                                        <span class="badge bg-warning">ATIVA</span> Usuários precisam de aprovação admin para acessar Jurídico
+                                    <?php else: ?>
+                                        <span class="badge bg-success">DESATIVADA</span> Usuários acessam Jurídico diretamente após onboarding
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                    <input type="hidden" name="action" value="toggle_juridico_approval">
+                                    <button type="submit" class="btn btn-<?= $juridico_requires_approval ? 'success' : 'warning' ?>">
+                                        <i class="bi bi-toggle-<?= $juridico_requires_approval ? 'on' : 'off' ?>"></i>
+                                        <?= $juridico_requires_approval ? 'Desativar Aprovação' : 'Ativar Aprovação' ?>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Stats Cards -->
                 <div class="row g-4 mb-4">

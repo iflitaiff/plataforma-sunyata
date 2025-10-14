@@ -10,6 +10,7 @@ session_name(SESSION_NAME);
 session_start();
 
 use Sunyata\Core\Database;
+use Sunyata\Admin\UserDeletionService;
 
 require_login();
 
@@ -20,6 +21,24 @@ if (!isset($_SESSION['user']['access_level']) || $_SESSION['user']['access_level
 }
 
 $db = Database::getInstance();
+$deletionService = new UserDeletionService();
+
+// Handle user deletion
+$message = '';
+$message_type = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_user') {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        $message = 'Token de segurança inválido';
+        $message_type = 'danger';
+    } else {
+        $userId = (int)($_POST['user_id'] ?? 0);
+        $result = $deletionService->deleteUser($userId, $_SESSION['user_id']);
+
+        $message = $result['message'];
+        $message_type = $result['success'] ? 'success' : 'danger';
+    }
+}
 
 // Filtros
 $filter_level = $_GET['level'] ?? '';
@@ -63,6 +82,13 @@ $pageTitle = 'Usuários - Admin';
 include __DIR__ . '/../../src/views/admin-header.php';
 ?>
                 <h1 class="mb-4">Gerenciamento de Usuários</h1>
+
+                <?php if ($message): ?>
+                    <div class="alert alert-<?= $message_type ?> alert-dismissible fade show">
+                        <?= sanitize_output($message) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Stats -->
                 <div class="alert alert-info">
@@ -120,6 +146,7 @@ include __DIR__ . '/../../src/views/admin-header.php';
                                         <th class="d-none d-xl-table-cell">Onboarding</th>
                                         <th class="d-none d-lg-table-cell">Cadastro</th>
                                         <th class="d-none d-xl-table-cell">Último Login</th>
+                                        <th class="text-center">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -146,6 +173,24 @@ include __DIR__ . '/../../src/views/admin-header.php';
                                             </td>
                                             <td class="d-none d-lg-table-cell"><?= date('d/m/Y', strtotime($user['created_at'])) ?></td>
                                             <td class="d-none d-xl-table-cell"><?= $user['last_login'] ? date('d/m/Y H:i', strtotime($user['last_login'])) : '-' ?></td>
+                                            <td class="text-center">
+                                                <?php if ($user['access_level'] === 'admin'): ?>
+                                                    <span class="badge bg-secondary" title="Não é permitido deletar admins">
+                                                        <i class="bi bi-shield-lock"></i>
+                                                    </span>
+                                                <?php elseif ($user['id'] == $_SESSION['user_id']): ?>
+                                                    <span class="badge bg-secondary" title="Não pode deletar a si mesmo">
+                                                        <i class="bi bi-person-x"></i>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <button type="button"
+                                                            class="btn btn-danger btn-sm"
+                                                            onclick="confirmDelete(<?= $user['id'] ?>, '<?= addslashes($user['name']) ?>')"
+                                                            title="Deletar usuário">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                <?php endif; ?>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -155,3 +200,30 @@ include __DIR__ . '/../../src/views/admin-header.php';
                 </div>
 
 <?php include __DIR__ . '/../../src/views/admin-footer.php'; ?>
+
+<!-- Hidden Form for Deletion -->
+<form id="delete-form" method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+    <input type="hidden" name="action" value="delete_user">
+    <input type="hidden" name="user_id" id="delete-user-id">
+</form>
+
+<script>
+function confirmDelete(userId, userName) {
+    // Primeira confirmação
+    if (!confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a DELETAR permanentemente o usuário:\n\n"${userName}"\n\nEsta ação é IRREVERSÍVEL e irá remover:\n- Conta do usuário\n- Perfil e dados pessoais\n- Solicitações de acesso\n- Histórico de uso\n\nDeseja continuar?`)) {
+        return;
+    }
+
+    // Segunda confirmação (confirmação dupla)
+    if (!confirm(`⚠️ CONFIRMAÇÃO FINAL\n\nVocê tem ABSOLUTA CERTEZA que deseja deletar "${userName}"?\n\nEsta é sua última chance de cancelar.\n\nClique OK para DELETAR PERMANENTEMENTE ou Cancelar para abortar.`)) {
+        return;
+    }
+
+    // Se passou pelas duas confirmações, submete o form
+    document.getElementById('delete-user-id').value = userId;
+    document.getElementById('delete-form').submit();
+}
+</script>
+</body>
+</html>

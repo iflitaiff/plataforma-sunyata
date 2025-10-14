@@ -11,8 +11,13 @@ session_name(SESSION_NAME);
 session_start();
 
 use Sunyata\Core\Database;
+use Sunyata\Core\Settings;
 
 require_login();
+
+// Ler configuração dinâmica de aprovação Jurídico
+$settings = Settings::getInstance();
+$juridico_requires_approval = $settings->get('juridico_requires_approval', true);
 
 // Se já completou onboarding E tem vertical, redireciona
 if (isset($_SESSION['user']['completed_onboarding']) && $_SESSION['user']['completed_onboarding']) {
@@ -49,10 +54,10 @@ $verticais = [
     'juridico' => [
         'nome' => 'Jurídico',
         'icone' => '⚖️',
-        'descricao' => 'Ferramentas especializadas para profissionais do Direito. <strong>Requer aprovação.</strong>',
+        'descricao' => 'Ferramentas especializadas para profissionais do Direito.' . ($juridico_requires_approval ? ' <strong>Requer aprovação.</strong>' : ''),
         'ferramentas' => ['Canvas Jurídico', 'Guia de Prompts (Jurídico)', 'Padrões Avançados (Jurídico)', 'Repositório de Prompts'],
         'disponivel' => true,
-        'requer_aprovacao' => true
+        'requer_aprovacao' => $juridico_requires_approval // Agora lê de Settings
     ],
     'vendas' => [
         'nome' => 'Vendas',
