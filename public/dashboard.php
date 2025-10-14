@@ -24,6 +24,15 @@ $consentManager = new ConsentManager();
 $currentUser = $auth->getCurrentUser();
 $contracts = $userModel->getActiveContracts($currentUser['id']);
 
+// Refresh user data from database to catch any admin-approved changes
+// This ensures users see updated vertical access without needing to re-login
+$freshUserData = $userModel->findById($currentUser['id']);
+if ($freshUserData) {
+    $_SESSION['user']['selected_vertical'] = $freshUserData['selected_vertical'];
+    $_SESSION['user']['completed_onboarding'] = (bool)$freshUserData['completed_onboarding'];
+    $currentUser = array_merge($currentUser, $freshUserData);
+}
+
 // Handle consent form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accept_terms'])) {
     if (!verify_csrf($_POST['csrf_token'] ?? '')) {

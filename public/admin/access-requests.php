@@ -52,10 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf($_POST['csrf_token'] ??
                 if ($action === 'approve') {
                     $db->update('users', [
                         'selected_vertical' => $request['vertical'],
-                        'completed_onboarding' => true
+                        'completed_onboarding' => 1
                     ], 'id = :id', ['id' => $request['user_id']]);
 
-                    $message = 'Solicitação aprovada! Usuário recebeu acesso à vertical.';
+                    $message = 'Solicitação aprovada! Usuário recebeu acesso à vertical. IMPORTANTE: O usuário precisa fazer logout e login novamente para ver as mudanças.';
                 } else {
                     $message = 'Solicitação rejeitada.';
                 }
