@@ -11,8 +11,15 @@ session_name(SESSION_NAME);
 session_start();
 
 use Sunyata\Core\Database;
+use Sunyata\Core\Settings;
 
 require_login();
+
+$db = Database::getInstance();
+$settings = Settings::getInstance();
+
+// Verificar se aprovação está desabilitada
+$juridico_requires_approval = $settings->get('juridico_requires_approval', true);
 
 $errors = [];
 $success = false;
@@ -44,9 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($errors)) {
             try {
-                $db = Database::getInstance();
-
-                // Salvar solicitação de acesso
+                // Salvar dados do perfil
                 $request_data = [
                     'profissao' => $profissao,
                     'oab' => $oab ?: null,
@@ -54,6 +59,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'motivo' => $motivo
                 ];
 
+                // SE APROVAÇÃO DESABILITADA: dar acesso imediato
+                if (!$juridico_requires_approval) {
+                    // Atualizar usuário
+                    $db->update('users', [
+                        'selected_vertical' => 'juridico',
+                        'completed_onboarding' => 1
+                    ], 'id = :id', ['id' => $_SESSION['user_id']]);
+
+                    // Salvar perfil
+                    $db->insert('user_profiles', [
+                        'user_id' => $_SESSION['user_id'],
+                        'profile_data' => json_encode($request_data, JSON_UNESCAPED_UNICODE)
+                    ]);
+
+                    // Log
+                    $db->insert('audit_logs', [
+                        'user_id' => $_SESSION['user_id'],
+                        'action' => 'onboarding_completed',
+                        'entity_type' => 'users',
+                        'entity_id' => $_SESSION['user_id'],
+                        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                        'details' => json_encode(['vertical' => 'juridico', 'auto_approved' => true])
+                    ]);
+
+                    // Atualizar sessão
+                    $_SESSION['user']['selected_vertical'] = 'juridico';
+                    $_SESSION['user']['completed_onboarding'] = true;
+
+                    // Redirecionar para dashboard
+                    redirect(BASE_URL . '/dashboard.php');
+                }
+
+                // SE APROVAÇÃO HABILITADA: criar solicitação e aguardar
                 $request_id = $db->insert('vertical_access_requests', [
                     'user_id' => $_SESSION['user_id'],
                     'vertical' => 'juridico',
@@ -94,7 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'details' => json_encode(['vertical' => 'juridico'])
                 ]);
 
-                $success = true;
+                // Redirecionar para tela de aguardo
+                redirect(BASE_URL . '/aguardando-aprovacao.php');
 
             } catch (Exception $e) {
                 error_log('Erro ao solicitar acesso jurídico: ' . $e->getMessage());
