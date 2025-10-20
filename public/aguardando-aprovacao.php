@@ -157,30 +157,20 @@ $minutos = floor(($tempo_aguardando % 3600) / 60);
 
                             <!-- Ações -->
                             <div class="d-grid gap-2">
-                                <button onclick="location.reload()" class="btn btn-outline-primary">
+                                <button onclick="location.reload()" class="btn btn-primary">
                                     <i class="bi bi-arrow-clockwise"></i>
                                     Verificar Agora
                                 </button>
 
-                                <a href="<?= BASE_URL ?>/onboarding-step2.php" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left"></i>
-                                    Escolher Outra Vertical
+                                <a href="https://chat.whatsapp.com/HEyyAyoS4bb6ycTMs0kLWq"
+                                   target="_blank"
+                                   class="btn btn-success">
+                                    <i class="bi bi-whatsapp"></i> Contate o Administrador
                                 </a>
 
                                 <a href="<?= BASE_URL ?>/logout.php" class="btn btn-outline-danger">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    Sair da Sessão
+                                    <i class="bi bi-box-arrow-right"></i> Sair
                                 </a>
-                            </div>
-
-                            <!-- Informação adicional -->
-                            <div class="mt-4 pt-4 border-top">
-                                <p class="small text-muted mb-1">
-                                    Precisa de ajuda?
-                                </p>
-                                <p class="small text-muted">
-                                    Entre em contato: <?= SUPPORT_EMAIL ?>
-                                </p>
                             </div>
                         </div>
                     </div>

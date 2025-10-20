@@ -175,6 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vertical Jurídico - Solicitar Acesso - <?= APP_NAME ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         .onboarding-container {
             min-height: 100vh;
@@ -205,17 +206,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="alert alert-info text-start">
                                         <strong>ℹ️ E agora?</strong>
                                         <p class="mb-0 mt-2">
-                                            Enquanto aguarda a aprovação, você pode escolher outra vertical
-                                            para começar a usar a plataforma imediatamente!
+                                            Sua solicitação está em análise. Aguarde o contato da equipe.
                                         </p>
                                     </div>
 
                                     <div class="d-grid gap-2">
-                                        <a href="<?= BASE_URL ?>/onboarding-step2.php" class="btn btn-primary">
-                                            Escolher Outra Vertical
+                                        <a href="https://chat.whatsapp.com/HEyyAyoS4bb6ycTMs0kLWq"
+                                           target="_blank"
+                                           class="btn btn-success">
+                                            <i class="bi bi-whatsapp"></i> Contate o Administrador
                                         </a>
-                                        <a href="<?= BASE_URL ?>/dashboard.php" class="btn btn-outline-secondary">
-                                            Ir para Dashboard
+                                        <a href="<?= BASE_URL ?>/logout.php" class="btn btn-outline-danger">
+                                            <i class="bi bi-box-arrow-right"></i> Sair
                                         </a>
                                     </div>
                                 </div>

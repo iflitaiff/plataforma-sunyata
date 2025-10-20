@@ -1,6 +1,7 @@
 <?php
 /**
  * Admin - Gerenciamento de Usuários
+ * Updated: 2025-10-14 19:25
  */
 
 require_once __DIR__ . '/../../vendor/autoload.php';

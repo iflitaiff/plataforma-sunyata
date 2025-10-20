@@ -2,6 +2,7 @@
 /**
  * Admin Dashboard - Página Principal
  * Apenas para usuários com access_level = 'admin'
+ * Updated: 2025-10-14 19:25
  */
 
 require_once __DIR__ . '/../../vendor/autoload.php';
@@ -12,6 +13,7 @@ session_start();
 
 use Sunyata\Core\Database;
 use Sunyata\Core\Settings;
+use Sunyata\AI\ClaudeService;
 
 require_login();
 
@@ -95,6 +97,36 @@ $stats['recent_logins'] = $db->fetchAll("
     ORDER BY u.last_login DESC
     LIMIT 10
 ");
+
+// Estatísticas API Claude (mês atual)
+try {
+    $apiStats = $db->fetchOne("
+        SELECT
+            COUNT(*) as total_prompts,
+            COALESCE(SUM(tokens_total), 0) as total_tokens,
+            COALESCE(SUM(cost_usd), 0) as total_cost
+        FROM prompt_history
+        WHERE status = 'success'
+        AND MONTH(created_at) = MONTH(NOW())
+        AND YEAR(created_at) = YEAR(NOW())
+    ");
+    $stats['api_month'] = [
+        'total_prompts' => $apiStats['total_prompts'] ?? 0,
+        'total_tokens' => $apiStats['total_tokens'] ?? 0,
+        'total_cost' => $apiStats['total_cost'] ?? 0
+    ];
+
+    // Custo hoje
+    $todayCost = $db->fetchOne("
+        SELECT COALESCE(SUM(cost_usd), 0) as cost FROM prompt_history
+        WHERE status = 'success' AND DATE(created_at) = CURDATE()
+    ");
+    $stats['api_today'] = $todayCost['cost'] ?? 0;
+} catch (Exception $e) {
+    error_log('Error fetching API stats: ' . $e->getMessage());
+    $stats['api_month'] = ['total_prompts' => 0, 'total_tokens' => 0, 'total_cost' => 0];
+    $stats['api_today'] = 0;
+}
 
 $pageTitle = 'Admin Dashboard';
 
@@ -203,6 +235,59 @@ include __DIR__ . '/../../src/views/admin-header.php';
                                         <i class="bi bi-grid"></i>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Cost Alert Card -->
+                <?php
+                $costLimit = 10.00; // USD limite mensal
+                $costPercent = ($stats['api_month']['total_cost'] / $costLimit) * 100;
+                $alertClass = $costPercent > 80 ? 'danger' : ($costPercent > 50 ? 'warning' : 'success');
+                ?>
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-<?= $alertClass ?>">
+                            <div class="card-header bg-<?= $alertClass ?> text-white">
+                                <h5 class="mb-0"><i class="bi bi-robot"></i> Uso API Claude - Mês Atual</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <h6 class="text-muted">Prompts Gerados</h6>
+                                        <h3><?= number_format($stats['api_month']['total_prompts']) ?></h3>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6 class="text-muted">Tokens Usados</h6>
+                                        <h3><?= number_format($stats['api_month']['total_tokens']) ?></h3>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6 class="text-muted">Custo Mês</h6>
+                                        <h3>USD <?= number_format($stats['api_month']['total_cost'], 4) ?></h3>
+                                        <small class="text-muted">Limite: USD <?= number_format($costLimit, 2) ?></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6 class="text-muted">Custo Hoje</h6>
+                                        <h3>USD <?= number_format($stats['api_today'], 4) ?></h3>
+                                    </div>
+                                </div>
+                                <div class="progress mt-3" style="height: 25px;">
+                                    <div class="progress-bar bg-<?= $alertClass ?>" role="progressbar"
+                                         style="width: <?= min($costPercent, 100) ?>%"
+                                         aria-valuenow="<?= $costPercent ?>" aria-valuemin="0" aria-valuemax="100">
+                                        <?= number_format($costPercent, 1) ?>%
+                                    </div>
+                                </div>
+                                <?php if ($costPercent > 80): ?>
+                                    <div class="alert alert-danger mt-3 mb-0">
+                                        <strong>⚠️ Atenção!</strong> Uso da API acima de 80% do limite mensal.
+                                    </div>
+                                <?php elseif ($costPercent > 50): ?>
+                                    <div class="alert alert-warning mt-3 mb-0">
+                                        <strong>⚡ Aviso:</strong> Uso da API acima de 50% do limite mensal.
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

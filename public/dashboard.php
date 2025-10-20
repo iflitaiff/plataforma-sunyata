@@ -15,6 +15,7 @@ require_login();
 
 use Sunyata\Auth\GoogleAuth;
 use Sunyata\Core\User;
+use Sunyata\Core\VerticalManager;
 use Sunyata\Compliance\ConsentManager;
 
 $auth = new GoogleAuth();
@@ -182,18 +183,9 @@ $pageTitle = 'Dashboard';
             $is_admin = ($currentUser['access_level'] === 'admin');
             $completed_onboarding = $_SESSION['user']['completed_onboarding'] ?? false;
 
-            // Nomes amigáveis e ícones das verticais
-            $verticals_info = [
-                'docencia' => ['nome' => 'Docência', 'icone' => '👩‍🏫', 'disponivel' => true],
-                'pesquisa' => ['nome' => 'Pesquisa', 'icone' => '🔬', 'disponivel' => true],
-                'ifrj_alunos' => ['nome' => 'IFRJ - Alunos', 'icone' => '🎓', 'disponivel' => true],
-                'juridico' => ['nome' => 'Jurídico', 'icone' => '⚖️', 'disponivel' => true],
-                'vendas' => ['nome' => 'Vendas', 'icone' => '📈', 'disponivel' => false],
-                'marketing' => ['nome' => 'Marketing', 'icone' => '📢', 'disponivel' => false],
-                'licitacoes' => ['nome' => 'Licitações', 'icone' => '📋', 'disponivel' => false],
-                'rh' => ['nome' => 'Recursos Humanos', 'icone' => '👥', 'disponivel' => false],
-                'geral' => ['nome' => 'Geral', 'icone' => '🌐', 'disponivel' => false]
-            ];
+            // Obter verticais do VerticalManager
+            $verticalManager = VerticalManager::getInstance();
+            $verticals_info = $verticalManager->getAllDisplayData();
             ?>
 
             <?php if ($is_admin): ?>

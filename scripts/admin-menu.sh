@@ -669,6 +669,83 @@ maintenance_restart_php() {
 }
 
 # ============================================================================
+# PREPARAÇÃO PARA TESTES
+# ============================================================================
+
+prepare_for_tests() {
+    show_header
+    echo -e "${YELLOW}🧪 PREPARAR SISTEMA PARA TESTES${NC}"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo "Esta opção irá executar TODAS as ações necessárias para preparar o sistema"
+    echo "para testes do zero:"
+    echo ""
+    echo -e "  ${BOLD}✓${NC} Remover todos os usuários de teste e seus dados"
+    echo "  ${BOLD}✓${NC} Remover consents LGPD dos usuários de teste"
+    echo "  ${BOLD}✓${NC} Remover histórico de prompts da API"
+    echo "  ${BOLD}✓${NC} Remover solicitações de acesso pendentes"
+    echo "  ${BOLD}✓${NC} Remover perfis de usuário"
+    echo "  ${BOLD}✓${NC} Remover logs de auditoria"
+    echo "  ${BOLD}✓${NC} Limpar TODAS as sessões ativas (todos serão deslogados)"
+    echo "  ${BOLD}✓${NC} Limpar cache do sistema"
+    echo ""
+    echo -e "${CYAN}Usuários que serão removidos:${NC}"
+    echo "  • filipe.litaiff@gmail.com"
+    echo "  • pmo@diagnext.com"
+    echo "  • filipe.barbosa@coppead.ufrj.br"
+    echo "  • claudesunyata@gmail.com"
+    echo ""
+    echo -e "${GREEN}Usuários PROTEGIDOS (não serão tocados):${NC}"
+    echo "  • flitaiff@gmail.com (admin)"
+    echo "  • filipe.litaiff@ifrj.edu.br (admin)"
+    echo ""
+    echo -e "${RED}⚠️  ATENÇÃO: Esta ação é IRREVERSÍVEL!${NC}"
+    echo -e "${RED}   Todos os dados dos usuários de teste serão PERMANENTEMENTE removidos.${NC}"
+    echo -e "${RED}   Todas as sessões ativas serão encerradas (todos os usuários serão deslogados).${NC}"
+    echo ""
+    echo -n "Deseja continuar? (digite 'SIM' para confirmar): "
+    read confirm
+
+    if [ "$confirm" != "SIM" ]; then
+        echo -e "${YELLOW}Operação cancelada.${NC}"
+        sleep 2
+        return
+    fi
+
+    echo ""
+    echo -e "${GREEN}✓ Confirmação recebida. Iniciando preparação para testes...${NC}"
+    echo ""
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo ""
+
+    # Executar script de preparação
+    if [ -f "./scripts/prepare-test-users.sh" ]; then
+        ./scripts/prepare-test-users.sh -y
+    else
+        echo -e "${RED}✗ Erro: Script prepare-test-users.sh não encontrado!${NC}"
+        echo "Certifique-se de executar este menu do diretório raiz do projeto."
+        sleep 3
+        return
+    fi
+
+    echo ""
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}✓ SISTEMA PRONTO PARA TESTES!${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${CYAN}📝 Próximos Passos:${NC}"
+    echo "  1. Acesse: $BASE_URL"
+    echo "  2. Faça login com Google OAuth usando os usuários de teste"
+    echo "  3. Complete o onboarding e teste os fluxos"
+    echo ""
+    echo -e "${BLUE}💡 Dica:${NC} Use a opção 3 (Configurações) para habilitar/desabilitar"
+    echo "   a aprovação da vertical Jurídico durante seus testes."
+    echo ""
+
+    pause
+}
+
+# ============================================================================
 # MENU PRINCIPAL
 # ============================================================================
 
@@ -695,6 +772,7 @@ main_menu() {
         echo -e "  ${BOLD}4)${NC} 📊 Monitoramento e Logs"
         echo -e "  ${BOLD}5)${NC} 🔧 Manutenção do Sistema"
         echo ""
+        echo -e "  ${BOLD}8)${NC} 🧪 Preparar sistema para testes"
         echo -e "  ${BOLD}9)${NC} 🌐 Abrir portal no navegador"
         echo -e "  ${BOLD}0)${NC} 🚪 Sair"
         echo ""
@@ -708,6 +786,7 @@ main_menu() {
             3) menu_settings ;;
             4) menu_monitoring ;;
             5) menu_maintenance ;;
+            8) prepare_for_tests ;;
             9) xdg-open "$BASE_URL" 2>/dev/null || echo "Execute: $BASE_URL"; sleep 2 ;;
             0)
                 clear_screen

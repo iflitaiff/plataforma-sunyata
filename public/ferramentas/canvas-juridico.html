@@ -525,12 +525,12 @@
             </div>
         </div>
 
-        <button class="generate-button" onclick="generatePrompt()">⚖️ Gerar Prompt Jurídico Estruturado</button>
+        <button class="generate-button" onclick="generatePrompt()">⚖️ Gerar Análise Jurídica com IA</button>
 
         <div class="output" id="output">
-            <h3>📋 Seu Prompt Jurídico Estruturado</h3>
+            <h3>🤖 Análise Gerada por IA</h3>
             <div class="prompt-output" id="promptOutput"></div>
-            <button class="copy-button" onclick="copyPrompt()">📋 Copiar Prompt</button>
+            <button class="copy-button" onclick="copyPrompt()">📋 Copiar Resposta</button>
         </div>
 
         <div class="contacts-section">
@@ -565,7 +565,7 @@
             event.target.classList.add('active');
         }
 
-        function generatePrompt() {
+        async function generatePrompt() {
             const tarefa = document.getElementById('tarefa').value.trim();
             const contexto = document.getElementById('contexto').value.trim();
             const entradas = document.getElementById('entradas').value.trim();
@@ -578,37 +578,58 @@
                 return;
             }
 
-            let prompt = `Você é um advogado sênior especializado em grandes escritórios com vasta experiência em advocacia empresarial e conhecimento profundo da prática jurídica brasileira.\n\n`;
-            
-            prompt += `**TAREFA/OBJETIVO JURÍDICO:**\n${tarefa}\n\n`;
-            
-            prompt += `**CONTEXTO & CLIENTE:**\n${contexto}\n\n`;
-            
-            if (entradas) {
-                prompt += `**MATERIAIS DISPONÍVEIS:**\n${entradas}\n\n`;
-            }
-            
-            if (restricoes) {
-                prompt += `**RESTRIÇÕES & MARCO LEGAL:**\n${restricoes}\n\n`;
-            }
-            
-            if (saida) {
-                prompt += `**FORMATO DA ENTREGA:**\n${saida}\n\n`;
-            }
-            
-            if (criterios) {
-                prompt += `**CRITÉRIOS DE QUALIDADE:**\n${criterios}\n\n`;
-            }
-            
-            prompt += `**INSTRUÇÕES IMPORTANTES:**\n- Mantenha rigor técnico-jurídico e aderência às melhores práticas de grandes escritórios\n- Considere sempre aspectos práticos de implementação e viabilidade econômica\n- Base suas sugestões na legislação brasileira vigente e jurisprudência consolidada\n- Estruture sua resposta de forma profissional e diretamente aplicável\n- Se alguma informação essencial estiver ausente, questione antes de prosseguir\n\n`;
-            
-            prompt += `Faça-me perguntas indexadas, sequenciais, uma por vez até que você julgue entender o suficiente do contexto da tarefa, da qualidade esperada de sua resposta e interação comigo.`;
+            // Mostrar loading
+            const button = document.querySelector('.generate-button');
+            const originalText = button.textContent;
+            button.textContent = '⏳ Gerando resposta com IA...';
+            button.disabled = true;
 
-            document.getElementById('promptOutput').textContent = prompt;
-            document.getElementById('output').classList.add('show');
-            
-            // Smooth scroll to output
-            document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+            // Preparar dados
+            const data = {
+                tarefa,
+                contexto,
+                entradas,
+                restricoes,
+                saida,
+                criterios
+            };
+
+            try {
+                // Chamar API
+                const response = await fetch('/api/generate-juridico.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Mostrar resposta do Claude (não o prompt)
+                    document.getElementById('promptOutput').textContent = result.response;
+                    document.getElementById('output').classList.add('show');
+
+                    // Smooth scroll to output
+                    document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    // Em caso de erro, mostrar o prompt gerado (fallback)
+                    alert('Erro ao gerar resposta IA: ' + (result.error || 'Erro desconhecido'));
+                    if (result.prompt) {
+                        document.getElementById('promptOutput').textContent = result.prompt;
+                        document.getElementById('output').classList.add('show');
+                        document.getElementById('output').scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            } catch (error) {
+                console.error('Erro na chamada API:', error);
+                alert('Erro de conexão. Por favor, tente novamente.');
+            } finally {
+                // Restaurar botão
+                button.textContent = originalText;
+                button.disabled = false;
+            }
         }
 
         function copyPrompt() {

@@ -10,14 +10,9 @@ require_once __DIR__ . '/../config/config.php';
 session_name(SESSION_NAME);
 session_start();
 
-use Sunyata\Core\Database;
-use Sunyata\Core\Settings;
+use Sunyata\Core\VerticalManager;
 
 require_login();
-
-// Ler configuração dinâmica de aprovação Jurídico
-$settings = Settings::getInstance();
-$juridico_requires_approval = $settings->get('juridico_requires_approval', true);
 
 // Se já completou onboarding E tem vertical, redireciona
 if (isset($_SESSION['user']['completed_onboarding']) && $_SESSION['user']['completed_onboarding']) {
@@ -27,74 +22,9 @@ if (isset($_SESSION['user']['completed_onboarding']) && $_SESSION['user']['compl
     }
 }
 
-// Definição das verticais disponíveis
-$verticais = [
-    'docencia' => [
-        'nome' => 'Docência',
-        'icone' => '👨‍🏫',
-        'descricao' => 'Ferramentas para planejamento de aulas, criação de conteúdo educacional e gestão pedagógica.',
-        'ferramentas' => ['Canvas Docente', 'Canvas Pesquisa', 'Biblioteca de Prompts (Jogos)', 'Guia de Prompts (Jogos)', 'Repositório de Prompts'],
-        'disponivel' => true
-    ],
-    'pesquisa' => [
-        'nome' => 'Pesquisa',
-        'icone' => '🔬',
-        'descricao' => 'Recursos para estruturação de projetos de pesquisa acadêmica e científica.',
-        'ferramentas' => ['Canvas Docente', 'Canvas Pesquisa', 'Repositório de Prompts'],
-        'disponivel' => true
-    ],
-    'ifrj_alunos' => [
-        'nome' => 'IFRJ - Alunos',
-        'icone' => '🎓',
-        'descricao' => 'Área exclusiva para alunos do IFRJ com ferramentas de apoio ao aprendizado.',
-        'ferramentas' => ['Biblioteca de Prompts (Jogos)', 'Guia de Prompts (Jogos)', 'Canvas Pesquisa', 'Repositório de Prompts'],
-        'disponivel' => true,
-        'requer_info_extra' => true // IFRJ precisa de nível e curso
-    ],
-    'juridico' => [
-        'nome' => 'Jurídico',
-        'icone' => '⚖️',
-        'descricao' => 'Ferramentas especializadas para profissionais do Direito.' . ($juridico_requires_approval ? ' <strong>Requer aprovação.</strong>' : ''),
-        'ferramentas' => ['Canvas Jurídico', 'Guia de Prompts (Jurídico)', 'Padrões Avançados (Jurídico)', 'Repositório de Prompts'],
-        'disponivel' => true,
-        'requer_aprovacao' => $juridico_requires_approval // Agora lê de Settings
-    ],
-    'vendas' => [
-        'nome' => 'Vendas',
-        'icone' => '📈',
-        'descricao' => 'Ferramentas para otimizar processos de vendas e relacionamento com clientes.',
-        'ferramentas' => [],
-        'disponivel' => false
-    ],
-    'marketing' => [
-        'nome' => 'Marketing',
-        'icone' => '📢',
-        'descricao' => 'Recursos para criação de conteúdo, campanhas e estratégias de marketing digital.',
-        'ferramentas' => [],
-        'disponivel' => false
-    ],
-    'licitacoes' => [
-        'nome' => 'Licitações',
-        'icone' => '📋',
-        'descricao' => 'Ferramentas para elaboração de propostas e gestão de processos licitatórios.',
-        'ferramentas' => [],
-        'disponivel' => false
-    ],
-    'rh' => [
-        'nome' => 'Recursos Humanos',
-        'icone' => '👥',
-        'descricao' => 'Soluções para recrutamento, seleção e gestão de pessoas.',
-        'ferramentas' => [],
-        'disponivel' => false
-    ],
-    'geral' => [
-        'nome' => 'Geral',
-        'icone' => '🌐',
-        'descricao' => 'Ferramentas de propósito geral para diversas áreas e aplicações.',
-        'ferramentas' => [],
-        'disponivel' => false
-    ]
-];
+// Obter verticais do VerticalManager
+$verticalManager = VerticalManager::getInstance();
+$verticais = $verticalManager->getAllDisplayData(true); // Apenas disponíveis
 
 $pageTitle = 'Escolha sua Vertical';
 ?>
@@ -209,7 +139,7 @@ $pageTitle = 'Escolha sua Vertical';
 
                             <?php if (!$vertical['disponivel']): ?>
                                 <span class="badge bg-secondary vertical-badge">Em breve</span>
-                            <?php elseif ($vertical['requer_aprovacao'] ?? false): ?>
+                            <?php elseif ($vertical['requer_aprovacao']): ?>
                                 <span class="badge bg-warning text-dark vertical-badge">Requer aprovação</span>
                             <?php endif; ?>
 
@@ -236,7 +166,7 @@ $pageTitle = 'Escolha sua Vertical';
 
                                 <?php if ($vertical['disponivel']): ?>
                                     <button type="button" class="btn btn-primary w-100 mt-3">
-                                        <?php if ($vertical['requer_aprovacao'] ?? false): ?>
+                                        <?php if ($vertical['requer_aprovacao']): ?>
                                             Solicitar Acesso
                                         <?php else: ?>
                                             Selecionar
@@ -260,7 +190,26 @@ $pageTitle = 'Escolha sua Vertical';
                         <h6>ℹ️ Informações Importantes:</h6>
                         <ul class="mb-0 small">
                             <li><strong>Verticais "Em breve":</strong> Estão em desenvolvimento e serão disponibilizadas em breve.</li>
-                            <li><strong>Vertical "Jurídico":</strong> Requer aprovação manual. Você receberá um email quando for aprovado.</li>
+                            <?php
+                            // Mostrar info sobre verticais que requerem aprovação
+                            $verticaisComAprovacao = array_filter($verticais, function($v) {
+                                return $v['requer_aprovacao'];
+                            });
+                            foreach ($verticaisComAprovacao as $slug => $vertical):
+                            ?>
+                                <li><strong>Vertical "<?= $vertical['nome'] ?>":</strong> Requer aprovação manual. Você receberá um email quando for aprovado.</li>
+                            <?php endforeach; ?>
+
+                            <?php
+                            // Mostrar info sobre verticais de acesso direto
+                            $verticaisDiretas = array_filter($verticais, function($v) {
+                                return !$v['requer_aprovacao'] && !$v['requer_info_extra'];
+                            });
+                            if (!empty($verticaisDiretas)):
+                            ?>
+                                <li><strong>Outras verticais:</strong> Acesso liberado. Você pode acessar diretamente após o onboarding.</li>
+                            <?php endif; ?>
+
                             <li><strong>Dúvidas?</strong> Entre em contato: <a href="mailto:<?= SUPPORT_EMAIL ?>"><?= SUPPORT_EMAIL ?></a></li>
                         </ul>
                     </div>
@@ -281,14 +230,14 @@ $pageTitle = 'Escolha sua Vertical';
             if (!vertical) return;
 
             // Se requer informações extras (IFRJ)
-            if (vertical.requer_info_extra) {
-                window.location.href = '<?= BASE_URL ?>/onboarding-ifrj.php';
+            if (vertical.requer_info_extra && vertical.form_extra) {
+                window.location.href = '<?= BASE_URL ?>/' + vertical.form_extra;
                 return;
             }
 
             // Se requer aprovação (Jurídico)
-            if (vertical.requer_aprovacao) {
-                window.location.href = '<?= BASE_URL ?>/onboarding-juridico.php';
+            if (vertical.requer_aprovacao && vertical.form_aprovacao) {
+                window.location.href = '<?= BASE_URL ?>/' + vertical.form_aprovacao;
                 return;
             }
 
