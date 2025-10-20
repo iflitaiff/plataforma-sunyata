@@ -58,19 +58,29 @@ A tabela **`consents`** (onde ficam os aceites LGPD) **NÃO estava sendo limpa**
 [9/9] Limpar cache
 ```
 
-### 2. Admin Menu Atualizado
+### 2. Prevenção de Solicitações Duplicadas
 
-**Nova opção no Menu Manutenção:**
+**Adicionada validação em `onboarding-juridico.php`:**
 
-```
-Menu 5 → Opção 7: Limpar consents LGPD órfãos
+```php
+// Verificar se já existe solicitação pendente
+$existing_request = $db->fetchOne("
+    SELECT id, status, requested_at
+    FROM vertical_access_requests
+    WHERE user_id = :user_id
+    AND vertical = 'juridico'
+    AND status = 'pending'
+    LIMIT 1
+", ['user_id' => $_SESSION['user_id']]);
 ```
 
 **Funcionalidade:**
-- Detecta consents sem usuário correspondente
-- Mostra quantidade encontrada
-- Remove após confirmação
-- Garante conformidade LGPD
+- Detecta solicitações pendentes antes de criar nova
+- Mostra mensagem amigável com tempo de espera
+- Oferece botões para:
+  * Ir para tela de aguardo
+  * Escolher outra vertical
+- Previne múltiplas solicitações simultâneas
 
 ## 📋 Estrutura da Tabela `consents`
 
@@ -94,24 +104,18 @@ CREATE TABLE consents (
 
 ## 🔧 Como Usar
 
-### Opção 1: Usar Script Atualizado
+### Usar Script de Preparação
 
 ```bash
 ./scripts/prepare-test-users.sh -y
 ```
 
-**Agora remove:**
+**Agora remove AUTOMATICAMENTE:**
 - ✅ Consents LGPD
 - ✅ Todas as sessões
 - ✅ Todos os outros dados do usuário
 
-### Opção 2: Limpar Consents Órfãos Via Menu
-
-```bash
-admin
-→ 5 (Manutenção)
-→ 7 (Limpar consents LGPD órfãos)
-```
+**Nota:** Não há mais necessidade de limpeza manual de consents. O script cuida de tudo automaticamente.
 
 ## 🧪 Como Testar a Correção
 
@@ -134,23 +138,25 @@ ssh -p 65002 u202164171@82.25.72.226 \
 # Resultado esperado: 0 consents para usuários de teste
 ```
 
-### Teste 2: Verificar consents órfãos
-
-```bash
-# Via Admin Menu
-admin → 5 → 7
-
-# Ou via SQL
-ssh -p 65002 u202164171@82.25.72.226 \
-  "/usr/bin/mariadb u202164171_sunyata -p'MiGOq%tMrUP+9Qy@bxR' \
-  -e 'SELECT COUNT(*) FROM consents c LEFT JOIN users u ON c.user_id = u.id WHERE u.id IS NULL;'"
-```
-
-### Teste 3: Verificar tela LGPD aparece
+### Teste 2: Verificar tela LGPD aparece
 
 1. Executar script de preparação
 2. Fazer login com usuário de teste
 3. ✅ **Resultado esperado:** Tela LGPD deve aparecer
+
+### Teste 3: Verificar prevenção de solicitações duplicadas
+
+1. Fazer login com usuário de teste
+2. Escolher vertical Jurídico
+3. Preencher formulário e enviar
+4. ✅ **Resultado esperado:** Redirecionado para tela de aguardo
+5. Voltar para `/onboarding-juridico.php`
+6. Tentar enviar formulário novamente
+7. ✅ **Resultado esperado:**
+   - Erro amigável (alerta amarelo)
+   - Mensagem mostrando tempo de espera
+   - Botão "Ir para Tela de Aguardo"
+   - Botão "Escolher Outra Vertical"
 
 ## 📊 Impacto da Correção
 
@@ -187,21 +193,18 @@ ssh -p 65002 u202164171@82.25.72.226 \
 
 ## 🚨 Ação Recomendada
 
-### Limpar Consents Órfãos Existentes
+### Executar Script de Preparação
 
-Se houver consents órfãos no banco (de antes da correção):
-
-```bash
-admin → 5 → 7
-```
-
-Ou:
+Para garantir limpeza completa de dados de teste:
 
 ```bash
-ssh -p 65002 u202164171@82.25.72.226 \
-  "/usr/bin/mariadb u202164171_sunyata -p'MiGOq%tMrUP+9Qy@bxR' \
-  -e 'DELETE FROM consents WHERE user_id NOT IN (SELECT id FROM users);'"
+./scripts/prepare-test-users.sh -y
 ```
+
+Isso irá automaticamente:
+- ✅ Remover todos os consents dos usuários de teste
+- ✅ Limpar todas as sessões
+- ✅ Remover todos os dados relacionados
 
 ## 📚 Arquivos Modificados
 
@@ -211,15 +214,17 @@ ssh -p 65002 u202164171@82.25.72.226 \
    - Atualizado número de etapas para 9
    - Atualizado relatório de estatísticas
 
-2. **scripts/admin-menu.sh**
-   - Adicionada opção 7 no menu de manutenção (linha 573)
-   - Nova função `maintenance_clean_orphaned_consents()` (linhas 673-707)
+2. **public/onboarding-juridico.php**
+   - Adicionada validação de solicitação duplicada (linhas 52-74)
+   - Interface aprimorada para erro de duplicação (linhas 231-264)
+   - Mostra tempo de espera desde solicitação anterior
+   - Botões contextuais para ação do usuário
 
 ## 🎯 Próximos Passos
 
 1. ✅ Executar script atualizado para preparar testes
-2. ✅ Limpar consents órfãos existentes via menu
-3. ✅ Testar que tela LGPD aparece sempre
+2. ✅ Testar que tela LGPD aparece sempre
+3. ✅ Testar prevenção de solicitações duplicadas
 4. ✅ Confirmar conformidade LGPD
 
 ---
