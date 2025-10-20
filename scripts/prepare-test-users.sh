@@ -35,6 +35,7 @@ TEST_USERS=(
     "filipe.litaiff@gmail.com"
     "pmo@diagnext.com"
     "filipe.barbosa@coppead.ufrj.br"
+    "claudesunyata@gmail.com"
 )
 
 # Função para executar comandos SQL remotos
