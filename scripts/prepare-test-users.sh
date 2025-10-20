@@ -117,8 +117,19 @@ IDS_LIST=$(IFS=,; echo "${USER_IDS[*]}")
 echo "      Total de usuários a remover: ${#USER_IDS[@]}"
 echo ""
 
-# 2. Remover histórico de prompts (prompt_history)
-echo -e "${BLUE}[2/8]${NC} Removendo histórico de prompts da API Claude..."
+# 2. Remover consents LGPD (compliance)
+echo -e "${BLUE}[2/9]${NC} Removendo consents LGPD..."
+CONSENT_COUNT=$(execute_sql "SELECT COUNT(*) FROM consents WHERE user_id IN ($IDS_LIST);" | tail -1)
+if [ "$CONSENT_COUNT" -gt 0 ]; then
+    execute_sql "DELETE FROM consents WHERE user_id IN ($IDS_LIST);"
+    echo "      ✓ $CONSENT_COUNT consent(s) removido(s)"
+else
+    echo "      - Nenhum consent encontrado"
+fi
+echo ""
+
+# 3. Remover histórico de prompts (prompt_history)
+echo -e "${BLUE}[3/9]${NC} Removendo histórico de prompts da API Claude..."
 PROMPT_COUNT=$(execute_sql "SELECT COUNT(*) FROM prompt_history WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$PROMPT_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM prompt_history WHERE user_id IN ($IDS_LIST);"
@@ -128,8 +139,8 @@ else
 fi
 echo ""
 
-# 3. Remover solicitações de acesso vertical
-echo -e "${BLUE}[3/8]${NC} Removendo solicitações de acesso vertical..."
+# 4. Remover solicitações de acesso vertical
+echo -e "${BLUE}[4/9]${NC} Removendo solicitações de acesso vertical..."
 ACCESS_COUNT=$(execute_sql "SELECT COUNT(*) FROM vertical_access_requests WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$ACCESS_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM vertical_access_requests WHERE user_id IN ($IDS_LIST);"
@@ -139,8 +150,8 @@ else
 fi
 echo ""
 
-# 4. Remover perfis de usuário
-echo -e "${BLUE}[4/8]${NC} Removendo perfis de usuário..."
+# 5. Remover perfis de usuário
+echo -e "${BLUE}[5/9]${NC} Removendo perfis de usuário..."
 PROFILE_COUNT=$(execute_sql "SELECT COUNT(*) FROM user_profiles WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$PROFILE_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM user_profiles WHERE user_id IN ($IDS_LIST);"
@@ -150,8 +161,8 @@ else
 fi
 echo ""
 
-# 5. Remover logs de auditoria
-echo -e "${BLUE}[5/8]${NC} Removendo logs de auditoria..."
+# 6. Remover logs de auditoria
+echo -e "${BLUE}[6/9]${NC} Removendo logs de auditoria..."
 AUDIT_COUNT=$(execute_sql "SELECT COUNT(*) FROM audit_logs WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$AUDIT_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM audit_logs WHERE user_id IN ($IDS_LIST);"
@@ -161,8 +172,8 @@ else
 fi
 echo ""
 
-# 6. Remover os próprios usuários
-echo -e "${BLUE}[6/8]${NC} Removendo registros de usuários..."
+# 7. Remover os próprios usuários
+echo -e "${BLUE}[7/9]${NC} Removendo registros de usuários..."
 for email in "${TEST_USERS[@]}"; do
     RESULT=$(execute_sql "DELETE FROM users WHERE email = '$email' AND access_level != 'admin';" 2>&1)
     if [ $? -eq 0 ]; then
@@ -171,20 +182,21 @@ for email in "${TEST_USERS[@]}"; do
 done
 echo ""
 
-# 7. Limpar sessões ativas
-echo -e "${BLUE}[7/8]${NC} Limpando sessões ativas..."
+# 8. Limpar sessões ativas (TODAS as sessões para garantir)
+echo -e "${BLUE}[8/9]${NC} Limpando TODAS as sessões ativas..."
 SESSION_DIR="/home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/var/sessions"
 SESSION_COUNT=$(execute_remote "find $SESSION_DIR -type f -name 'sess_*' 2>/dev/null | wc -l" | tr -d ' ')
 if [ "$SESSION_COUNT" -gt 0 ]; then
     execute_remote "rm -f $SESSION_DIR/sess_* 2>/dev/null"
     echo "      ✓ $SESSION_COUNT sessão(ões) removida(s)"
+    echo "      ${YELLOW}⚠️  ATENÇÃO: Todas as sessões foram limpas (todos os usuários serão deslogados)${NC}"
 else
     echo "      - Nenhuma sessão ativa"
 fi
 echo ""
 
-# 8. Limpar cache
-echo -e "${BLUE}[8/8]${NC} Limpando cache do sistema..."
+# 9. Limpar cache
+echo -e "${BLUE}[9/9]${NC} Limpando cache do sistema..."
 CACHE_DIR="/home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/var/cache"
 execute_remote "rm -rf $CACHE_DIR/* 2>/dev/null"
 echo "      ✓ Cache limpo"
@@ -198,12 +210,13 @@ echo ""
 
 # Estatísticas finais
 echo -e "${BLUE}📊 Estatísticas de Remoção:${NC}"
+echo "   • Consents LGPD removidos: $CONSENT_COUNT"
 echo "   • Prompts removidos: $PROMPT_COUNT"
 echo "   • Solicitações removidas: $ACCESS_COUNT"
 echo "   • Perfis removidos: $PROFILE_COUNT"
 echo "   • Logs removidos: $AUDIT_COUNT"
 echo "   • Usuários removidos: ${#USER_IDS[@]}"
-echo "   • Sessões limpas: $SESSION_COUNT"
+echo "   • Sessões limpas: $SESSION_COUNT (TODAS)"
 echo "   • Cache: limpo"
 echo ""
 
