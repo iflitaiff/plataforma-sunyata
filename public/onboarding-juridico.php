@@ -49,6 +49,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Por favor, descreva brevemente seu interesse';
         }
 
+        // Verificar se já existe solicitação pendente
+        if (empty($errors)) {
+            $existing_request = $db->fetchOne("
+                SELECT id, status, requested_at
+                FROM vertical_access_requests
+                WHERE user_id = :user_id
+                AND vertical = 'juridico'
+                AND status = 'pending'
+                LIMIT 1
+            ", ['user_id' => $_SESSION['user_id']]);
+
+            if ($existing_request) {
+                $tempo_espera = time() - strtotime($existing_request['requested_at']);
+                $horas = floor($tempo_espera / 3600);
+                $minutos = floor(($tempo_espera % 3600) / 60);
+
+                $tempo_msg = $horas > 0
+                    ? "{$horas} hora(s) e {$minutos} minuto(s)"
+                    : "{$minutos} minuto(s)";
+
+                $errors[] = "Você já possui uma solicitação pendente de acesso à vertical Jurídico enviada há {$tempo_msg}. Por favor, aguarde a análise da sua solicitação anterior ou acesse a tela de aguardando aprovação.";
+            }
+        }
+
         if (empty($errors)) {
             try {
                 // Salvar dados do perfil
@@ -205,12 +229,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
 
                                 <?php if (!empty($errors)): ?>
-                                    <div class="alert alert-danger">
+                                    <?php
+                                    // Verificar se é erro de solicitação duplicada
+                                    $has_duplicate_request = false;
+                                    foreach ($errors as $error) {
+                                        if (strpos($error, 'já possui uma solicitação pendente') !== false) {
+                                            $has_duplicate_request = true;
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                    <div class="alert alert-<?= $has_duplicate_request ? 'warning' : 'danger' ?>">
+                                        <?php if ($has_duplicate_request): ?>
+                                            <strong>⏳ Solicitação Já Enviada</strong>
+                                            <hr>
+                                        <?php endif; ?>
                                         <ul class="mb-0">
                                             <?php foreach ($errors as $error): ?>
                                                 <li><?= sanitize_output($error) ?></li>
                                             <?php endforeach; ?>
                                         </ul>
+                                        <?php if ($has_duplicate_request): ?>
+                                            <hr>
+                                            <div class="d-grid gap-2 mt-3">
+                                                <a href="<?= BASE_URL ?>/aguardando-aprovacao.php" class="btn btn-primary">
+                                                    ⏳ Ir para Tela de Aguardo
+                                                </a>
+                                                <a href="<?= BASE_URL ?>/onboarding-step2.php" class="btn btn-outline-secondary">
+                                                    ↩️ Escolher Outra Vertical
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
 

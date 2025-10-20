@@ -570,7 +570,6 @@ menu_maintenance() {
         echo "  4) Backup do banco de dados"
         echo "  5) Ver espaço em disco"
         echo "  6) Reiniciar PHP-FPM"
-        echo "  7) Limpar consents LGPD órfãos"
         echo ""
         echo "  0) Voltar ao menu principal"
         echo ""
@@ -585,7 +584,6 @@ menu_maintenance() {
             4) maintenance_backup_db ;;
             5) maintenance_disk_space ;;
             6) maintenance_restart_php ;;
-            7) maintenance_clean_orphaned_consents ;;
             0) return ;;
             *) echo -e "${RED}Opção inválida!${NC}"; sleep 1 ;;
         esac
@@ -667,42 +665,6 @@ maintenance_restart_php() {
         echo ""
         echo -e "${GREEN}✓ Sinal enviado ao PHP-FPM${NC}"
     fi
-    sleep 2
-}
-
-maintenance_clean_orphaned_consents() {
-    show_header
-    echo -e "${CYAN}🧹 LIMPAR CONSENTS LGPD ÓRFÃOS${NC}"
-    echo ""
-    echo "Verificando consents órfãos (sem usuário correspondente)..."
-    echo ""
-
-    ORPHANED=$(execute_sql "SELECT COUNT(*) FROM consents c LEFT JOIN users u ON c.user_id = u.id WHERE u.id IS NULL;" | tail -1)
-
-    if [ "$ORPHANED" -gt 0 ]; then
-        echo -e "${YELLOW}Encontrados: $ORPHANED consents órfãos${NC}"
-        echo ""
-        echo "Estes são registros de LGPD de usuários que foram removidos."
-        echo "Conforme LGPD, devem ser removidos quando o usuário é excluído."
-        echo ""
-        echo -n "Deseja remover? (s/n): "
-        read confirm
-
-        if [ "$confirm" == "s" ]; then
-            execute_sql "DELETE FROM consents WHERE user_id NOT IN (SELECT id FROM users);"
-            echo ""
-            echo -e "${GREEN}✓ $ORPHANED consents órfãos removidos!${NC}"
-            echo ""
-            echo "Conformidade LGPD restaurada."
-        else
-            echo ""
-            echo "Operação cancelada."
-        fi
-    else
-        echo -e "${GREEN}✓ Nenhum consent órfão encontrado!${NC}"
-        echo "Sistema em conformidade com LGPD."
-    fi
-
     sleep 2
 }
 
