@@ -1,0 +1,251 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║              🚀 ADMIN MENU - GUIA RÁPIDO DE USO 🚀                   ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+
+🎯 O QUE É?
+═══════════════════════════════════════════════════════════════════════
+
+Interface TUI (Text User Interface) completa para administração da
+Plataforma Sunyata. Execute do terminal WSL e gerencie o servidor remoto
+de forma visual e interativa!
+
+
+🚀 COMO EXECUTAR
+═══════════════════════════════════════════════════════════════════════
+
+cd /home/iflitaiff/projetos/plataforma-sunyata
+./scripts/admin-menu.sh
+
+
+💡 CRIAR ALIAS (RECOMENDADO!)
+═══════════════════════════════════════════════════════════════════════
+
+# Adicionar ao ~/.bashrc:
+alias admin='cd /home/iflitaiff/projetos/plataforma-sunyata && ./scripts/admin-menu.sh'
+
+# Recarregar:
+source ~/.bashrc
+
+# Agora execute de qualquer lugar:
+admin
+
+
+✨ O QUE O MENU FAZ?
+═══════════════════════════════════════════════════════════════════════
+
+MENU 1: 👥 GERENCIAMENTO DE USUÁRIOS
+  • Listar todos os usuários
+  • Buscar por email
+  • Ver por vertical
+  • Ver usuários recentes
+  • Remover usuários de teste (com 1 comando!)
+  • Estatísticas completas
+
+MENU 2: 📝 SOLICITAÇÕES DE ACESSO
+  • Listar pendentes
+  • Aprovar solicitação (AUTOMÁTICO!)
+  • Rejeitar com motivo
+  • Ver detalhes completos
+
+MENU 3: ⚙️  CONFIGURAÇÕES
+  • Alternar aprovação Jurídico (ON/OFF com 1 clique!)
+  • Ver todas configurações
+  • Editar qualquer setting
+
+MENU 4: 📊 MONITORAMENTO
+  • Ver logs de erro
+  • Monitorar logs AO VIVO (tail -f)
+  • Estatísticas API Claude
+  • Custo mensal com alertas
+  • Audit logs
+  • Sessões ativas
+
+MENU 5: 🔧 MANUTENÇÃO
+  • Limpar cache
+  • Limpar sessões antigas
+  • Otimizar banco
+  • BACKUP do banco (automático!)
+  • Ver espaço em disco
+  • Reiniciar PHP-FPM
+
+
+🎬 CASOS DE USO RÁPIDOS
+═══════════════════════════════════════════════════════════════════════
+
+1️⃣  APROVAR ACESSO JURÍDICO
+
+    admin
+    → 2 (Solicitações)
+    → 1 (Ver pendentes) - anotar ID
+    → 3 (Aprovar)
+    → Digite o ID
+    ✅ Pronto! Usuário liberado automaticamente
+
+────────────────────────────────────────────────────────────────────
+
+2️⃣  ALTERNAR APROVAÇÃO JURÍDICO (ON/OFF)
+
+    admin
+    → 3 (Configurações)
+    → 1 (Alternar)
+    ✅ Feito! Muda instantaneamente
+
+────────────────────────────────────────────────────────────────────
+
+3️⃣  VER CUSTO DA API
+
+    admin
+    → 4 (Monitoramento)
+    → 4 (Custo mensal)
+    ✅ Ver custo, limite e % usado
+
+────────────────────────────────────────────────────────────────────
+
+4️⃣  MONITORAR LOGS EM TEMPO REAL
+
+    admin
+    → 4 (Monitoramento)
+    → 2 (Logs tempo real)
+    ✅ Logs atualizando automaticamente
+    (Ctrl+C para sair)
+
+────────────────────────────────────────────────────────────────────
+
+5️⃣  REMOVER USUÁRIOS DE TESTE
+
+    admin
+    → 1 (Usuários)
+    → 5 (Remover teste)
+    → Digite 'SIM'
+    ✅ Todos removidos com rastros limpos
+
+────────────────────────────────────────────────────────────────────
+
+6️⃣  FAZER BACKUP DO BANCO
+
+    admin
+    → 5 (Manutenção)
+    → 4 (Backup)
+    ✅ Backup criado com timestamp
+
+
+📊 DASHBOARD RÁPIDO
+═══════════════════════════════════════════════════════════════════════
+
+O menu principal sempre mostra:
+
+  👥 Usuários: 18  |  📝 Pendentes: 2  |  💰 Custo: USD 0.0030
+
+
+🎨 INTERFACE VISUAL
+═══════════════════════════════════════════════════════════════════════
+
+O menu usa CORES para facilitar:
+
+  🔵 Azul    → Headers e separadores
+  🟢 Verde   → Sucesso e confirmações
+  🟡 Amarelo → Avisos importantes
+  🔴 Vermelho → Erros e ações críticas
+  ⚪ Branco  → Destaques
+  ⚫ Cinza   → Info secundária
+
+
+⌨️  NAVEGAÇÃO
+═══════════════════════════════════════════════════════════════════════
+
+  • Digite o NÚMERO da opção
+  • Pressione ENTER
+  • Digite 0 para VOLTAR/SAIR
+  • Ctrl+C para SAIR IMEDIATAMENTE
+
+
+🆚 ANTES vs DEPOIS
+═══════════════════════════════════════════════════════════════════════
+
+ANTES: Aprovar Solicitação
+  ssh -p 65002 user@host
+  mysql -u user -p
+  SELECT * FROM requests WHERE status='pending';
+  UPDATE requests SET status='approved' WHERE id=X;
+  UPDATE users SET vertical='juridico' WHERE id=Y;
+  exit
+  exit
+
+DEPOIS:
+  admin → 2 → 3 → [ID] → ✅ PRONTO!
+
+────────────────────────────────────────────────────────────────────
+
+ANTES: Alternar Configuração
+  ssh -p 65002 user@host
+  mysql -u user -p
+  UPDATE settings SET value='0' WHERE key='juridico_requires_approval';
+  exit
+  exit
+
+DEPOIS:
+  admin → 3 → 1 → ✅ PRONTO!
+
+────────────────────────────────────────────────────────────────────
+
+RESULTADO: Reduziu tarefas de MINUTOS para SEGUNDOS! 🚀
+
+
+🔐 SEGURANÇA
+═══════════════════════════════════════════════════════════════════════
+
+✅ Credenciais seguras no arquivo local
+✅ Confirmação obrigatória em ações destrutivas
+✅ Proteção automática de admins
+✅ Sem exposição de senhas nos comandos
+
+
+🚨 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════
+
+PROBLEMA: "Não foi possível conectar ao servidor"
+SOLUÇÃO:
+  ssh -p 65002 u202164171@82.25.72.226 "echo OK"
+  # Se pedir senha, configure chave SSH
+
+PROBLEMA: "bc: command not found"
+SOLUÇÃO:
+  sudo apt-get install bc
+
+PROBLEMA: Caracteres estranhos
+SOLUÇÃO:
+  Use terminal moderno (Windows Terminal recomendado)
+
+
+💡 DICAS PRO
+═══════════════════════════════════════════════════════════════════════
+
+1. Use 2 terminais:
+   Terminal 1: admin (monitorar logs)
+   Terminal 2: testes no navegador
+
+2. Crie o alias 'admin' para acesso rápido
+
+3. Use logs em tempo real durante testes
+
+4. Faça backup antes de mudanças importantes
+
+
+📚 DOCUMENTAÇÃO COMPLETA
+═══════════════════════════════════════════════════════════════════════
+
+  scripts/README-ADMIN-MENU.md  → Documentação completa
+  ONBOARDING_TEST_GUIDE.md      → Guia de testes
+  TEST_READY_STATUS.md          → Status do sistema
+
+
+═══════════════════════════════════════════════════════════════════════
+
+        🎉 ADMINISTRAÇÃO SIMPLIFICADA E VISUAL! 🚀
+
+               Digite 'admin' e comece agora!
+
+═══════════════════════════════════════════════════════════════════════
