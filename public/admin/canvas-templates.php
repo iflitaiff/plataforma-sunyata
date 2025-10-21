@@ -22,6 +22,19 @@ if (!isset($_SESSION['user']['access_level']) || $_SESSION['user']['access_level
 
 $db = Database::getInstance();
 
+// Stats for admin-header.php (pending requests badge)
+try {
+    $result = $db->fetchOne("
+        SELECT COUNT(*) as count
+        FROM vertical_access_requests
+        WHERE status = 'pending'
+    ");
+    $stats['pending_requests'] = $result['count'] ?? 0;
+} catch (Exception $e) {
+    // Table doesn't exist or query failed - set to 0
+    $stats['pending_requests'] = 0;
+}
+
 // Buscar todos os Canvas Templates
 $canvasTemplates = $db->fetchAll("
     SELECT
