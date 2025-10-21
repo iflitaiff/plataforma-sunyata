@@ -236,6 +236,106 @@ class ClaudeService {
     }
 
     /**
+     * Gera resposta via Claude API com contexto de conversa (múltiplas mensagens)
+     *
+     * @param string $systemPrompt System prompt do Canvas
+     * @param array $messages Array de mensagens no formato Claude API: [['role' => 'user'|'assistant', 'content' => 'texto'], ...]
+     * @param int $maxTokens Máximo de tokens na resposta (padrão: 4096)
+     * @param array $options Opções adicionais (model, temperature)
+     * @return array ['success' => bool, 'content' => string, 'message_type' => string, 'finish_reason' => string, 'usage' => [...]]
+     */
+    public function generateWithContext(
+        string $systemPrompt,
+        array $messages,
+        int $maxTokens = 4096,
+        array $options = []
+    ): array {
+        $startTime = microtime(true);
+
+        try {
+            // Preparar payload
+            $model = $options['model'] ?? $this->defaultModel;
+            $temperature = $options['temperature'] ?? 1.0;
+
+            $payload = [
+                'model' => $model,
+                'max_tokens' => $maxTokens,
+                'temperature' => $temperature,
+                'system' => $systemPrompt,
+                'messages' => $messages
+            ];
+
+            // Fazer chamada HTTP via cURL
+            $response = $this->callClaudeApi($payload);
+
+            // Calcular tempo de resposta
+            $responseTimeMs = (int)((microtime(true) - $startTime) * 1000);
+
+            // Extrair resposta
+            $claudeResponse = $response['content'][0]['text'] ?? '';
+            $finishReason = $response['stop_reason'] ?? 'unknown';
+            $tokensInput = $response['usage']['input_tokens'] ?? 0;
+            $tokensOutput = $response['usage']['output_tokens'] ?? 0;
+            $tokensTotal = $tokensInput + $tokensOutput;
+
+            // Detectar tipo de mensagem baseado em marcadores
+            $messageType = $this->detectMessageType($claudeResponse);
+
+            // Calcular custo (aproximado para Claude 3.5 Sonnet)
+            // Input: $3/MTok, Output: $15/MTok
+            $costUsd = ($tokensInput * 0.000003) + ($tokensOutput * 0.000015);
+
+            return [
+                'success' => true,
+                'content' => $claudeResponse,
+                'message_type' => $messageType,
+                'finish_reason' => $finishReason,
+                'usage' => [
+                    'input_tokens' => $tokensInput,
+                    'output_tokens' => $tokensOutput,
+                    'total_tokens' => $tokensTotal
+                ],
+                'cost_usd' => $costUsd,
+                'response_time_ms' => $responseTimeMs
+            ];
+
+        } catch (Exception $e) {
+            // Registrar erro
+            error_log('ClaudeService::generateWithContext() failed: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'content' => '',
+                'message_type' => 'error',
+                'error' => 'Erro ao gerar conteúdo. Por favor, tente novamente.',
+                'error_detail' => $e->getMessage(),
+                'response_time_ms' => (int)((microtime(true) - $startTime) * 1000)
+            ];
+        }
+    }
+
+    /**
+     * Detecta o tipo de mensagem baseado em marcadores no conteúdo
+     *
+     * @param string $content Conteúdo da mensagem do Claude
+     * @return string Tipo: 'question', 'final_answer', ou 'context'
+     */
+    private function detectMessageType(string $content): string {
+        // Detectar [PERGUNTA-N]
+        if (preg_match('/^\[PERGUNTA-\d+\]/', trim($content))) {
+            return 'question';
+        }
+
+        // Detectar [RESPOSTA-FINAL]
+        if (preg_match('/^\[RESPOSTA-FINAL\]/', trim($content))) {
+            return 'final_answer';
+        }
+
+        // Caso contrário, é contexto/informação adicional
+        return 'context';
+    }
+
+    /**
      * Obtém histórico de um usuário
      *
      * @param int $userId
