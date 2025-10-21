@@ -73,8 +73,10 @@ $sql .= " ORDER BY u.created_at DESC";
 
 $users = $db->fetchAll($sql, $params);
 
-// Estatísticas
-$stats = $db->fetchOne("SELECT COUNT(*) as total FROM users");
+// Estatísticas - CORRIGIDO: inicializar $stats como array e não sobrescrever
+$stats = [];
+$totalResult = $db->fetchOne("SELECT COUNT(*) as total FROM users");
+$stats['total'] = $totalResult['total'];
 $stats['pending_requests'] = $db->fetchOne("SELECT COUNT(*) as count FROM vertical_access_requests WHERE status = 'pending'")['count'];
 
 $pageTitle = 'Usuários - Admin';

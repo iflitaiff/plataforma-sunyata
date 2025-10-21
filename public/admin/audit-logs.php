@@ -50,6 +50,9 @@ $logs = $db->fetchAll($sql, $params);
 $actions = $db->fetchAll("SELECT DISTINCT action FROM audit_logs ORDER BY action");
 
 $pageTitle = 'Logs de Auditoria - Admin';
+
+// CORRIGIDO: inicializar $stats antes de usar
+$stats = [];
 $stats['pending_requests'] = $db->fetchOne("SELECT COUNT(*) as count FROM vertical_access_requests WHERE status = 'pending'")['count'];
 
 // Include responsive header

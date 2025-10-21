@@ -128,6 +128,9 @@ $requests = $db->fetchAll("
 ", $params);
 
 $pageTitle = 'Solicitações de Acesso';
+
+// CORRIGIDO: inicializar $stats antes de usar
+$stats = [];
 $stats['pending_requests'] = $db->fetchOne("SELECT COUNT(*) as count FROM vertical_access_requests WHERE status = 'pending'")['count'];
 
 // Include responsive header
