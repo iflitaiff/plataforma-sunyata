@@ -135,6 +135,9 @@ if ($current_page === 'index') {
                             <span class="badge bg-danger"><?= $pending_requests ?></span>
                         <?php endif; ?>
                     </a>
+                    <a href="<?= BASE_URL ?>/admin/canvas-templates.php" class="admin-nav-link <?= $current_page === 'canvas-templates' ? 'active' : '' ?>">
+                        <i class="bi bi-grid-3x3"></i> Canvas Templates
+                    </a>
                     <a href="<?= BASE_URL ?>/admin/audit-logs.php" class="admin-nav-link <?= $current_page === 'audit-logs' ? 'active' : '' ?>">
                         <i class="bi bi-journal-text"></i> Logs
                     </a>
@@ -162,6 +165,9 @@ if ($current_page === 'index') {
                         <?php if ($pending_requests > 0): ?>
                             <span class="badge bg-danger"><?= $pending_requests ?></span>
                         <?php endif; ?>
+                    </a>
+                    <a href="<?= BASE_URL ?>/admin/canvas-templates.php" class="admin-nav-link <?= $current_page === 'canvas-templates' ? 'active' : '' ?>">
+                        <i class="bi bi-grid-3x3"></i> Canvas Templates
                     </a>
                     <a href="<?= BASE_URL ?>/admin/audit-logs.php" class="admin-nav-link <?= $current_page === 'audit-logs' ? 'active' : '' ?>">
                         <i class="bi bi-journal-text"></i> Logs de Auditoria

@@ -5,7 +5,10 @@
     "license": "proprietary",
     "require": {
         "php": ">=8.0",
-        "league/oauth2-google": "^4.0"
+        "league/oauth2-google": "^4.0",
+        "smalot/pdfparser": "^2.7",
+        "phpoffice/phpword": "^1.2",
+        "mpdf/mpdf": "^8.2.4"
     },
     "require-dev": {
     },

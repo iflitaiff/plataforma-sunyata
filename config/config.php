@@ -37,12 +37,20 @@ if (!file_exists($secretsFile)) {
 }
 require_once $secretsFile;
 
-// Database configuration (loaded from secrets.php)
-define('DB_HOST', DB_HOST);
-define('DB_NAME', DB_NAME);
-define('DB_USER', DB_USER);
-define('DB_PASS', DB_PASS);
-define('DB_CHARSET', 'utf8mb4');
+// Database configuration
+// Priority: database.local.php (local dev) > secrets.php (production)
+$localDbFile = CONFIG_PATH . '/database.local.php';
+if (file_exists($localDbFile)) {
+    // Local development database
+    require_once $localDbFile;
+} else {
+    // Production database (from secrets.php)
+    define('DB_HOST', DB_HOST);
+    define('DB_NAME', DB_NAME);
+    define('DB_USER', DB_USER);
+    define('DB_PASS', DB_PASS);
+    define('DB_CHARSET', 'utf8mb4');
+}
 
 // Google OAuth (loaded from secrets.php)
 define('GOOGLE_CLIENT_ID', GOOGLE_CLIENT_ID);
