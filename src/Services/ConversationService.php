@@ -381,6 +381,11 @@ class ConversationService {
             $title = preg_replace('/\s+/', ' ', $title);
             $title = trim($title);
 
+            // Ensure title is not empty or too short
+            if (empty($title) || strlen($title) < 3) {
+                $title = 'Conversa ' . date('d/m/Y H:i');
+            }
+
             if (strlen($title) > 50) {
                 $title = substr($title, 0, 47) . '...';
             }
