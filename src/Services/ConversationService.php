@@ -81,6 +81,13 @@ class ConversationService {
                 throw new Exception('Invalid message type');
             }
 
+            // Bug #9 Fix: Validate content length (TEXT field limit ~65KB)
+            if (strlen($content) > 65000) {
+                $content = substr($content, 0, 65000);
+                $content .= "\n\n[NOTA: Conteúdo truncado devido ao tamanho]";
+                error_log("Message content truncated for conversation {$conversationId}");
+            }
+
             // Insert message
             $messageId = $this->db->insert('conversation_messages', [
                 'conversation_id' => $conversationId,
@@ -198,31 +205,45 @@ class ConversationService {
      * Attach files to a conversation
      *
      * @param int $conversationId Conversation ID
+     * @param int $userId User ID (ownership check)
      * @param array $fileIds Array of file IDs
      * @return bool True if attached successfully
      */
-    public function attachFiles(int $conversationId, array $fileIds): bool {
+    public function attachFiles(int $conversationId, int $userId, array $fileIds): bool {
         try {
+            $attachedCount = 0;
+
             foreach ($fileIds as $fileId) {
-                // Check if already attached (to avoid duplicates)
-                $exists = $this->db->fetchOne(
-                    "SELECT 1 FROM conversation_files
-                     WHERE conversation_id = :conversation_id AND file_id = :file_id",
+                // Bug #4 Fix: Verify file ownership
+                $file = $this->db->fetchOne(
+                    "SELECT id FROM user_files WHERE id = :file_id AND user_id = :user_id",
                     [
-                        'conversation_id' => $conversationId,
-                        'file_id' => $fileId
+                        'file_id' => $fileId,
+                        'user_id' => $userId
                     ]
                 );
 
-                if (!$exists) {
+                if (!$file) {
+                    error_log("User {$userId} tried to attach file {$fileId} they don't own");
+                    continue; // Skip files that don't belong to user
+                }
+
+                // Use try-catch to handle duplicate key gracefully
+                try {
                     $this->db->insert('conversation_files', [
                         'conversation_id' => $conversationId,
                         'file_id' => $fileId
                     ]);
+                    $attachedCount++;
+                } catch (Exception $e) {
+                    // Duplicate key - file already attached, continue
+                    if (strpos($e->getMessage(), 'Duplicate') === false) {
+                        throw $e; // Other error, propagate
+                    }
                 }
             }
 
-            return true;
+            return $attachedCount > 0 || count($fileIds) === 0;
 
         } catch (Exception $e) {
             error_log('ConversationService::attachFiles error: ' . $e->getMessage());
@@ -234,10 +255,26 @@ class ConversationService {
      * Complete a conversation (change status to 'completed')
      *
      * @param int $conversationId Conversation ID
+     * @param int|null $userId User ID for ownership check (null for internal calls)
      * @return bool True if completed successfully
      */
-    public function completeConversation(int $conversationId): bool {
+    public function completeConversation(int $conversationId, ?int $userId = null): bool {
         try {
+            // Bug #5 Fix: If userId provided, verify ownership
+            if ($userId !== null) {
+                $conversation = $this->db->fetchOne(
+                    "SELECT id FROM conversations WHERE id = :id AND user_id = :user_id",
+                    [
+                        'id' => $conversationId,
+                        'user_id' => $userId
+                    ]
+                );
+
+                if (!$conversation) {
+                    return false; // Conversation not found or user doesn't own it
+                }
+            }
+
             $updated = $this->db->update(
                 'conversations',
                 [

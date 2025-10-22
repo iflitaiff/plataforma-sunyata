@@ -24,10 +24,23 @@ class FileUploadService {
 
     private const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
-    private const UPLOAD_BASE_PATH = '/var/uploads';
-
     private function __construct() {
         $this->db = Database::getInstance();
+    }
+
+    /**
+     * Get upload base path (environment-aware)
+     *
+     * @return string Upload directory path
+     */
+    private function getUploadBasePath(): string {
+        // Check if running on Hostinger production
+        if (strpos(__DIR__, '/home/u202164171') !== false) {
+            return '/home/u202164171/domains/sunyataconsulting.com/storage/uploads';
+        }
+
+        // Local/development environment
+        return '/var/uploads';
     }
 
     public static function getInstance(): self {
@@ -46,6 +59,22 @@ class FileUploadService {
      */
     public function uploadFile(array $fileData, int $userId): array {
         try {
+            // Bug #6 Fix: Basic rate limiting (10 uploads per hour per user)
+            $recentUploadsCount = $this->db->fetchOne(
+                "SELECT COUNT(*) as count FROM user_files
+                 WHERE user_id = :user_id
+                 AND created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)",
+                ['user_id' => $userId]
+            )['count'] ?? 0;
+
+            if ($recentUploadsCount >= 10) {
+                return [
+                    'success' => false,
+                    'file_id' => null,
+                    'message' => 'Limite de uploads excedido. Você pode enviar até 10 arquivos por hora.'
+                ];
+            }
+
             // Validate file data structure
             if (!isset($fileData['tmp_name']) || !isset($fileData['name']) || !isset($fileData['size'])) {
                 return [
@@ -73,8 +102,18 @@ class FileUploadService {
                 ];
             }
 
-            // Validate file size
+            // Validate reported file size
             if ($fileData['size'] > self::MAX_FILE_SIZE) {
+                return [
+                    'success' => false,
+                    'file_id' => null,
+                    'message' => 'Arquivo muito grande. Tamanho máximo: 10MB'
+                ];
+            }
+
+            // Bug #7 Fix: Validate REAL file size (don't trust client data)
+            $realSize = filesize($fileData['tmp_name']);
+            if ($realSize > self::MAX_FILE_SIZE) {
                 return [
                     'success' => false,
                     'file_id' => null,
@@ -99,13 +138,18 @@ class FileUploadService {
             $fileHash = hash_file('sha256', $fileData['tmp_name']);
             $timestamp = time();
             $extension = $this->getExtensionFromMime($mimeType);
+
+            // Bug #8 Fix: Sanitize filename to prevent path traversal
             $originalName = pathinfo($fileData['name'], PATHINFO_FILENAME);
+            $originalName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
+            $originalName = substr($originalName, 0, 100); // Limit length
+
             $storedFilename = "{$fileHash}_{$timestamp}_{$originalName}.{$extension}";
 
-            // Create directory structure: /var/uploads/YYYY/MM/user_id/
+            // Create directory structure: /path/to/uploads/YYYY/MM/user_id/
             $year = date('Y');
             $month = date('m');
-            $uploadDir = self::UPLOAD_BASE_PATH . "/{$year}/{$month}/{$userId}";
+            $uploadDir = $this->getUploadBasePath() . "/{$year}/{$month}/{$userId}";
 
             if (!is_dir($uploadDir)) {
                 if (!mkdir($uploadDir, 0755, true)) {
@@ -136,7 +180,7 @@ class FileUploadService {
                 'stored_filename' => $storedFilename,
                 'file_path' => $filePath,
                 'mime_type' => $mimeType,
-                'file_size' => $fileData['size'],
+                'file_size' => $realSize, // Bug #7 Fix: Use real size, not client-reported
                 'created_at' => date('Y-m-d H:i:s')
             ]);
 

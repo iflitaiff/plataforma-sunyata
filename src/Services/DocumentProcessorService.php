@@ -36,21 +36,25 @@ class DocumentProcessorService {
      * Extract text from a file (PDF or DOCX)
      *
      * @param int $fileId File ID from user_files table
+     * @param int $userId User ID (ownership check)
      * @return array ['success' => bool, 'text' => string, 'message' => string]
      */
-    public function extractText(int $fileId): array {
+    public function extractText(int $fileId, int $userId): array {
         try {
-            // Get file data from database
+            // Bug #3 Fix: Get file data with ownership check
             $file = $this->db->fetchOne(
-                "SELECT * FROM user_files WHERE id = :file_id",
-                ['file_id' => $fileId]
+                "SELECT * FROM user_files WHERE id = :file_id AND user_id = :user_id",
+                [
+                    'file_id' => $fileId,
+                    'user_id' => $userId
+                ]
             );
 
             if (!$file) {
                 return [
                     'success' => false,
                     'text' => '',
-                    'message' => 'Arquivo não encontrado'
+                    'message' => 'Arquivo não encontrado ou você não tem permissão para acessá-lo'
                 ];
             }
 
@@ -98,11 +102,12 @@ class DocumentProcessorService {
      * Process a file: extract text and save to database
      *
      * @param int $fileId File ID
+     * @param int $userId User ID (ownership check)
      * @return bool True if processed successfully
      */
-    public function processFile(int $fileId): bool {
+    public function processFile(int $fileId, int $userId): bool {
         try {
-            $result = $this->extractText($fileId);
+            $result = $this->extractText($fileId, $userId);
 
             if (!$result['success']) {
                 error_log("Failed to extract text from file {$fileId}: {$result['message']}");
