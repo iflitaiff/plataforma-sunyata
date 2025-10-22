@@ -16,6 +16,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../config/config.php';
 
 use App\Services\ConversationService;
+use App\Services\FileUploadService;
 use App\AI\ClaudeService;
 
 // Start session for authentication and CSRF
@@ -85,6 +86,21 @@ try {
     }
 
     $userMessage = trim($data['message']);
+
+    // Bug #6 Fix: Validate message length
+    $maxMessageLength = 50000; // 50,000 characters (~10,000 words)
+    if (strlen($userMessage) > $maxMessageLength) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Message too long',
+            'message' => "Message cannot exceed {$maxMessageLength} characters",
+            'current_length' => strlen($userMessage),
+            'max_length' => $maxMessageLength
+        ]);
+        exit;
+    }
+
     $conversationId = isset($data['conversation_id']) ? (int) $data['conversation_id'] : null;
     $fileIds = isset($data['file_ids']) && is_array($data['file_ids']) ? $data['file_ids'] : [];
 
@@ -93,6 +109,22 @@ try {
     // Get service instances
     $conversationService = ConversationService::getInstance();
     $claudeService = new ClaudeService();
+
+    // 5.1. Check chat rate limit (Bug #1 Fix)
+    $rateLimitResult = $conversationService->checkChatRateLimit($userId);
+
+    if (!$rateLimitResult['allowed']) {
+        http_response_code(429); // Too Many Requests
+        echo json_encode([
+            'success' => false,
+            'error' => 'Rate limit exceeded',
+            'message' => 'You have exceeded the chat rate limit. Please try again later.',
+            'retry_after' => $rateLimitResult['retry_after'], // seconds
+            'current_count' => $rateLimitResult['current_count'],
+            'limit' => $rateLimitResult['limit']
+        ]);
+        exit;
+    }
 
     // 6. Create or validate conversation
     if ($conversationId === null) {
@@ -107,17 +139,50 @@ try {
 
         $conversationId = $createResult['conversation_id'];
     } else {
-        // Validate that conversation belongs to user
-        // This is done implicitly by ConversationService methods with ownership checks
+        // Bug #3 Fix: Validate that conversation belongs to user (EXPLICIT CHECK)
+        $conversation = $conversationService->getConversation($conversationId, $userId);
+
+        if (!$conversation) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Conversation not found',
+                'message' => 'Conversation does not exist or you do not have access to it'
+            ]);
+            exit;
+        }
     }
 
     // 7. Attach files to conversation (if provided)
     if (!empty($fileIds)) {
+        // Bug #8 Fix: Validate ownership of EACH file BEFORE attaching
+        $fileUploadService = FileUploadService::getInstance();
+
+        foreach ($fileIds as $fileId) {
+            $fileData = $fileUploadService->getFileById((int) $fileId, $userId);
+
+            if (!$fileData) {
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'File access denied',
+                    'message' => "You do not have access to file ID: {$fileId}"
+                ]);
+                exit;
+            }
+        }
+
+        // Now attach files (ownership already validated)
         $attachResult = $conversationService->attachFiles($conversationId, $userId, $fileIds);
 
         if (!$attachResult['success']) {
-            // Log but don't fail - some files might not be accessible
-            error_log("File attachment warning for conversation {$conversationId}: " . $attachResult['message']);
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'File attachment failed',
+                'message' => $attachResult['message']
+            ]);
+            exit;
         }
     }
 

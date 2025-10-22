@@ -36,23 +36,47 @@ try {
 
     $userId = (int) $_SESSION['user_id'];
 
-    // 2. Get conversation_id from request
-    $conversationId = null;
-
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $conversationId = isset($_GET['conversation_id']) ? (int) $_GET['conversation_id'] : null;
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $conversationId = isset($_POST['conversation_id']) ? (int) $_POST['conversation_id'] : null;
-    } else {
+    // Bug #7 Fix: Accept only POST (no GET to prevent CSRF)
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
         header('Content-Type: application/json');
         echo json_encode([
             'success' => false,
             'error' => 'Method not allowed',
-            'message' => 'Only GET and POST requests are accepted'
+            'message' => 'Only POST requests are accepted'
         ]);
         exit;
     }
+
+    // 2. Validate CSRF token
+    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($csrfToken) || !isset($_SESSION['csrf_token']) || $csrfToken !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'error' => 'CSRF validation failed',
+            'message' => 'Invalid or missing CSRF token'
+        ]);
+        exit;
+    }
+
+    // 3. Parse JSON body
+    $rawBody = file_get_contents('php://input');
+    $data = json_decode($rawBody, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'error' => 'Invalid JSON',
+            'message' => 'Request body must be valid JSON'
+        ]);
+        exit;
+    }
+
+    $conversationId = isset($data['conversation_id']) ? (int) $data['conversation_id'] : null;
 
     // 3. Validate conversation_id
     if ($conversationId === null || $conversationId <= 0) {
@@ -99,13 +123,16 @@ try {
         exit;
     }
 
-    // 5. Fetch all messages in conversation
+    // 5. Fetch messages in conversation (Bug #11 Fix: limit to 500)
+    $maxMessages = 500;
+
     $messages = $db->fetchAll(
         'SELECT id, role, content, created_at
          FROM conversation_messages
          WHERE conversation_id = ?
-         ORDER BY created_at ASC',
-        [$conversationId]
+         ORDER BY created_at ASC
+         LIMIT ?',
+        [$conversationId, $maxMessages]
     );
 
     if (empty($messages)) {
@@ -118,6 +145,14 @@ try {
         ]);
         exit;
     }
+
+    // Check if conversation was truncated
+    $totalMessagesResult = $db->fetchOne(
+        'SELECT COUNT(*) as count FROM conversation_messages WHERE conversation_id = ?',
+        [$conversationId]
+    );
+    $totalMessages = (int) $totalMessagesResult['count'];
+    $wasTruncated = $totalMessages > $maxMessages;
 
     // 6. Generate PDF using mPDF
     $mpdf = new Mpdf([
@@ -208,6 +243,14 @@ try {
     $html .= 'Total de mensagens: ' . count($messages);
     $html .= '</div>';
 
+    // Bug #11 Fix: Warn if conversation was truncated
+    if ($wasTruncated) {
+        $html .= '<div style="background:#fff3cd;padding:10px;margin-bottom:20px;border-left:4px solid #ffc107;">';
+        $html .= '⚠️ <strong>Aviso:</strong> Esta conversa possui ' . $totalMessages . ' mensagens. ';
+        $html .= 'Apenas as primeiras ' . $maxMessages . ' mensagens foram exportadas.';
+        $html .= '</div>';
+    }
+
     // Add messages
     foreach ($messages as $message) {
         $role = htmlspecialchars($message['role'], ENT_QUOTES, 'UTF-8');
@@ -232,14 +275,19 @@ try {
     // Write HTML to PDF
     $mpdf->WriteHTML($html);
 
+    // Bug #5 Fix: Generate PDF to string FIRST (don't send headers yet)
+    $pdfContent = $mpdf->Output('', 'S'); // 'S' = return as string
+
     // 7. Output PDF as download
+    // Now that PDF is successfully generated, send headers and content
     $filename = 'conversa-' . $conversationId . '.pdf';
 
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($pdfContent));
 
-    // Output PDF
-    $mpdf->Output($filename, 'I'); // 'I' = inline (send to browser)
+    echo $pdfContent;
+    exit;
 
 } catch (Exception $e) {
     // Log unexpected errors

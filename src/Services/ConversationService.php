@@ -334,6 +334,53 @@ class ConversationService {
     }
 
     /**
+     * Check chat rate limit for a user
+     *
+     * Limit: 100 messages per hour
+     *
+     * @param int $userId User ID
+     * @return array ['allowed' => bool, 'retry_after' => int|null]
+     */
+    public function checkChatRateLimit(int $userId): array {
+        try {
+            // Count user messages in the last hour
+            $stmt = $this->db->prepare(
+                'SELECT COUNT(*) as count
+                 FROM conversation_messages cm
+                 INNER JOIN conversations c ON cm.conversation_id = c.id
+                 WHERE c.user_id = ?
+                   AND cm.role = "user"
+                   AND cm.created_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)'
+            );
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            $count = (int) $result['count'];
+            $limit = 100; // 100 messages per hour
+
+            if ($count >= $limit) {
+                return [
+                    'allowed' => false,
+                    'retry_after' => 3600, // 1 hour in seconds
+                    'current_count' => $count,
+                    'limit' => $limit
+                ];
+            }
+
+            return [
+                'allowed' => true,
+                'current_count' => $count,
+                'limit' => $limit
+            ];
+
+        } catch (Exception $e) {
+            error_log('ConversationService::checkChatRateLimit error: ' . $e->getMessage());
+            // On error, allow the request (fail open)
+            return ['allowed' => true];
+        }
+    }
+
+    /**
      * Generate automatic title for conversation based on content
      *
      * @param int $conversationId Conversation ID

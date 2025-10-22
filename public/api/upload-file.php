@@ -127,7 +127,18 @@ try {
 
     $extractedText = null;
     if ($extractResult['success']) {
-        $extractedText = $extractResult['text'] ?? null;
+        $rawText = $extractResult['text'] ?? '';
+
+        // Bug #2 Fix: Validate extracted text length
+        $maxTextLength = 100000; // 100KB of text (sufficient for ~50 pages)
+
+        if (strlen($rawText) > $maxTextLength) {
+            $extractedText = substr($rawText, 0, $maxTextLength);
+            $extractedText .= "\n\n[...texto truncado devido ao tamanho. Original: " . strlen($rawText) . " caracteres]";
+            error_log("Text extraction truncated for file_id {$fileId}: original size " . strlen($rawText) . " bytes");
+        } else {
+            $extractedText = $rawText;
+        }
     } else {
         // Log extraction failure but don't fail the upload
         error_log("Text extraction failed for file_id {$fileId}: " . ($extractResult['message'] ?? 'Unknown error'));
