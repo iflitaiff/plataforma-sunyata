@@ -35,6 +35,24 @@ use App\Services\FileUploadService;  // Carrega automaticamente!
 
 ---
 
+## B
+
+### Bootstrap (Framework CSS)
+Framework frontend que fornece componentes visuais prontos (botões, formulários, grids, modais).
+
+**Uso no projeto:**
+```html
+<button class="btn btn-primary">Upload</button>  <!-- Botão estilizado -->
+<div class="container">...</div>  <!-- Grid responsivo -->
+```
+
+**Benefícios:**
+- ✅ Design responsivo (mobile-first)
+- ✅ Componentes consistentes
+- ✅ Desenvolvimento rápido
+
+---
+
 ## C
 
 ### CSRF (Cross-Site Request Forgery)
@@ -59,6 +77,19 @@ Gerenciador de dependências do PHP (similar ao npm do JavaScript).
 composer install          # Instala dependências
 composer dump-autoload    # Regenera autoload
 ```
+
+### cURL
+Biblioteca para fazer requisições HTTP em PHP.
+
+**Exemplo:**
+```php
+$ch = curl_init('https://api.example.com/data');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+**Uso no projeto:** Chamadas para Claude API
 
 ---
 
@@ -87,6 +118,40 @@ class FileUploadService {
 }
 ```
 
+### Docsify
+Gerador de sites de documentação que renderiza Markdown em tempo real.
+
+**Características:**
+- ✅ Sem build (apenas HTML/JS/CSS)
+- ✅ Busca integrada
+- ✅ Temas personalizáveis
+- ✅ Plugins (Mermaid, syntax highlighting)
+
+**Uso no projeto:** Portal de documentação em `/docs/`
+
+---
+
+## E
+
+### Environment Variables
+Variáveis de configuração armazenadas fora do código-fonte.
+
+**Exemplo (.env):**
+```bash
+DB_HOST=localhost
+DB_NAME=sunyata_db
+ANTHROPIC_API_KEY=sk-ant-xxx
+```
+
+**Acesso em PHP:**
+```php
+$apiKey = $_ENV['ANTHROPIC_API_KEY'];
+```
+
+**Benefícios:**
+- ✅ Segurança (não commita secrets)
+- ✅ Configuração por ambiente (dev/prod)
+
 ---
 
 ## F
@@ -104,6 +169,18 @@ CREATE TABLE user_files (
 ```
 
 Se deletar um user, todos seus files são deletados automaticamente.
+
+### finfo_file()
+Função PHP que detecta o MIME type real de um arquivo (não confia no cliente).
+
+**Uso:**
+```php
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$mimeType = finfo_file($finfo, $filePath);  // 'application/pdf'
+finfo_close($finfo);
+```
+
+**Segurança:** Previne upload de arquivos maliciosos disfarçados
 
 ---
 
@@ -128,6 +205,15 @@ if (!$result['success']) {
     echo json_encode(['error' => $result['message']]);
 }
 ```
+
+### Hostinger
+Provedor de hospedagem web onde a aplicação está deployada.
+
+**Características:**
+- Hospedagem compartilhada (LiteSpeed)
+- PHP 8.2, MariaDB 10.6
+- Acesso SSH limitado
+- Painel hPanel para gerenciamento
 
 ---
 
@@ -157,7 +243,55 @@ $array = json_decode($jsonString, true);
 
 ---
 
+## L
+
+### Layered Architecture
+Padrão arquitetural que organiza código em camadas com responsabilidades distintas.
+
+**Camadas do projeto:**
+1. Presentation (Frontend)
+2. Public Pages (PHP views)
+3. API (Endpoints REST)
+4. Services (Lógica de negócio)
+5. AI (Claude integration)
+6. Database (Acesso a dados)
+
+**Benefício:** Separação de responsabilidades, manutenibilidade
+
+### LiteSpeed
+Servidor web usado pelo Hostinger (alternativa ao Apache/Nginx).
+
+**Características:**
+- ✅ Performance superior ao Apache
+- ✅ Compatível com .htaccess
+- ✅ Cache integrado
+
+---
+
 ## M
+
+### MariaDB
+Sistema de gerenciamento de banco de dados relacional (fork do MySQL).
+
+**Versão no projeto:** 10.6
+
+**Características:**
+- ✅ Open source
+- ✅ Compatível com MySQL
+- ✅ Performance otimizada
+
+### Mermaid
+Linguagem para criar diagramas usando texto.
+
+**Exemplo:**
+```mermaid
+graph LR
+    A[User] --> B[API]
+    B --> C[Service]
+    C --> D[Database]
+```
+
+**Uso no projeto:** Diagramas de arquitetura e fluxos na documentação
 
 ### MIME Type
 Identificador do tipo de um arquivo.
@@ -208,6 +342,21 @@ $service = new FileUploadService();
 ---
 
 ## O
+
+### OAuth 2.0
+Protocolo de autenticação que permite login via provedores externos (Google, Facebook).
+
+**Fluxo no projeto:**
+1. Usuário clica "Login com Google"
+2. Redirecionado para Google
+3. Google valida credenciais
+4. Retorna para aplicação com token
+5. Aplicação cria sessão
+
+**Benefícios:**
+- ✅ Não armazena senhas
+- ✅ UX melhor (login rápido)
+- ✅ Segurança delegada ao Google
 
 ### Ownership Check
 Verificação se um usuário tem permissão para acessar um recurso.
@@ -306,6 +455,27 @@ if ($count >= 10) {
 }
 ```
 
+### Repository Pattern
+Padrão que abstrai acesso a dados, centralizando queries em uma classe.
+
+**Sem Repository:**
+```php
+// Query espalhada por todo código
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+$stmt->execute(['id' => $userId]);
+```
+
+**Com Repository:**
+```php
+class UserRepository {
+    public function findById(int $id): ?User {
+        // Query centralizada
+    }
+}
+```
+
+**Benefício:** Mudanças no banco impactam apenas o Repository
+
 ### REST (Representational State Transfer)
 Estilo de arquitetura para APIs web.
 
@@ -386,6 +556,17 @@ $db2 = Database::getInstance();
 // $db1 === $db2 (mesma instância!)
 ```
 
+### SOLID Principles
+Cinco princípios de design orientado a objetos.
+
+**S - Single Responsibility:** Classe tem uma única responsabilidade  
+**O - Open/Closed:** Aberto para extensão, fechado para modificação  
+**L - Liskov Substitution:** Subclasses substituem classes base  
+**I - Interface Segregation:** Interfaces específicas > interfaces gerais  
+**D - Dependency Inversion:** Depender de abstrações, não implementações
+
+**Aplicação no projeto:** Services seguem SRP, DI segue DIP
+
 ### SQL Injection
 Ataque onde código SQL malicioso é inserido via input do usuário.
 
@@ -449,6 +630,23 @@ ALTER DATABASE db_name CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 // HTML
 <meta charset="UTF-8">
 ```
+
+---
+
+## V
+
+### Vendor Directory
+Diretório onde Composer instala dependências externas.
+
+**Estrutura:**
+```
+vendor/
+├── autoload.php          # Autoloader principal
+├── composer/             # Metadados do Composer
+└── [pacotes externos]/   # Bibliotecas instaladas
+```
+
+**Importante:** Nunca commitar `vendor/` no Git (usar `.gitignore`)
 
 ---
 
@@ -561,3 +759,4 @@ $doubled = array_map(fn($n) => $n * 2, $numbers);  // [2, 4, 6, 8, 10]
     <a href="/">Voltar para Home</a>
   </p>
 </div>
+

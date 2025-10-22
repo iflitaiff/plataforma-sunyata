@@ -2,7 +2,20 @@
 
 ## Visão Geral
 
-A Plataforma Sunyata segue uma **arquitetura em camadas** (layered architecture) com separação clara de responsabilidades.
+A Plataforma Sunyata organiza o sistema em **camadas** (layers), onde cada camada tem uma responsabilidade específica e se comunica com as outras de forma controlada. Esta separação permite manutenibilidade, testabilidade e reutilização de código.
+
+([ver explicação didática](apendice-iniciantes.md#arquitetura-em-camadas))
+
+### Nossa Arquitetura
+
+A Plataforma Sunyata segue uma **arquitetura em camadas** (layered architecture) com 6 camadas principais:
+
+1. 🌐 **Presentation** - Interface do usuário (HTML/CSS/JS)
+2. 📄 **Public Pages** - Páginas PHP com lógica mínima
+3. 🔌 **API** - Endpoints RESTful JSON
+4. ⚙️ **Services** - Lógica de negócio reutilizável
+5. 🤖 **AI** - Integração com Claude API
+6. 💾 **Database** - Acesso aos dados
 
 ### Diagrama de Alto Nível
 
@@ -59,6 +72,69 @@ graph TB
 
 ---
 
+## 🔄 Como as Camadas Conversam?
+
+### Regra de Ouro: Comunicação Unidirecional
+
+A comunicação entre camadas flui em uma única direção: Frontend → API → Services → Database. Camadas inferiores nunca comunicam diretamente com camadas superiores.
+
+([ver explicação didática](apendice-iniciantes.md#comunicação-entre-camadas))
+
+### Fluxo Permitido ✅
+
+```
+Frontend → API → Services → Database
+   ↓        ↓        ↓
+  HTML    JSON    SQL
+```
+
+### Fluxo Proibido ❌
+
+```
+Database → Frontend  ❌ NÃO!
+Services → Frontend  ❌ NÃO!
+```
+
+**Por quê?**
+- ✅ **Manutenibilidade** - Mudanças em uma camada não quebram outras
+- ✅ **Testabilidade** - Posso testar Services sem Frontend
+- ✅ **Reutilização** - Mesmos Services para Web + Mobile + CLI
+
+### Exemplo Prático: Upload de Arquivo
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 Usuário
+    participant F as 🌐 Frontend
+    participant A as 🔌 API
+    participant S as ⚙️ Service
+    participant D as 💾 Database
+
+    U->>F: Clica "Upload"
+    Note over F: Valida tamanho<br/>(feedback rápido)
+    
+    F->>A: POST /api/upload-file.php
+    Note over A: Verifica sessão<br/>Valida CSRF
+    
+    A->>S: uploadFile(file, userId)
+    Note over S: Lógica de negócio:<br/>- Rate limit<br/>- MIME type<br/>- Ownership
+    
+    S->>D: INSERT INTO files
+    D-->>S: file_id
+    
+    S-->>A: {success: true, file_id: 123}
+    A-->>F: JSON response
+    F-->>U: "Upload concluído!"
+```
+
+**Observe:**
+1. Cada camada faz **apenas** sua responsabilidade
+2. Frontend não acessa Database diretamente
+3. Database não "sabe" que existe um Frontend
+4. Service pode ser reutilizado por outra API (mobile, CLI)
+
+---
+
 ## Camadas da Aplicação
 
 ### 1. 🌐 Presentation Layer (Frontend)
@@ -99,6 +175,8 @@ async function uploadFile(file) {
 }
 ```
 
+([ver explicação didática](apendice-iniciantes.md#presentation-layer))
+
 ---
 
 ### 2. 📄 Public Pages Layer
@@ -131,11 +209,13 @@ $files = FileUploadService::getInstance()->getUserFiles($userId);
 ```
 
 **Características:**
-- ✅ Verificação de sessão
-- ✅ Chamadas a Services
-- ✅ Render de HTML
-- ❌ **NÃO** contém lógica de negócio
-- ❌ **NÃO** acessa banco diretamente
+- ✅ **Verificação de sessão** - Garante que apenas usuários autenticados acessem a página, redirecionando para login se necessário
+- ✅ **Chamadas a Services** - Delega toda lógica de negócio para a camada de Services, mantendo a página focada apenas em apresentação
+- ✅ **Render de HTML** - Responsável por gerar a interface visual (HTML/CSS/JS) que o usuário vê no navegador
+- ❌ **NÃO contém lógica de negócio** - Validações, cálculos e regras de negócio ficam nos Services, não nas páginas
+- ❌ **NÃO acessa banco diretamente** - Todo acesso a dados passa obrigatoriamente pela camada de Services
+
+([ver explicação didática](apendice-iniciantes.md#public-pages-layer))
 
 ---
 
@@ -204,12 +284,14 @@ try {
 ```
 
 **Características:**
-- ✅ Content-Type: application/json
-- ✅ HTTP status codes corretos
-- ✅ Tratamento de exceções
-- ✅ Logging de erros
-- ❌ **NÃO** contém lógica de negócio
-- ❌ **NÃO** acessa banco diretamente
+- ✅ **Content-Type: application/json** - Todas as respostas são em formato JSON, facilitando integração com frontends modernos (React, Vue, etc)
+- ✅ **HTTP status codes corretos** - Usa códigos semânticos (200 OK, 400 Bad Request, 401 Unauthorized, 500 Internal Error) para indicar resultado
+- ✅ **Tratamento de exceções** - Captura erros inesperados com try-catch e retorna mensagens amigáveis ao invés de expor detalhes internos
+- ✅ **Logging de erros** - Registra erros em logs para debugging, permitindo rastrear problemas em produção sem expor ao usuário
+- ❌ **NÃO contém lógica de negócio** - APIs são apenas pontos de entrada; toda lógica fica nos Services
+- ❌ **NÃO acessa banco diretamente** - Mantém separação de responsabilidades delegando acesso a dados para Services
+
+([ver explicação didática](apendice-iniciantes.md#api-layer))
 
 ---
 
@@ -297,13 +379,15 @@ class FileUploadService
 ```
 
 **Características:**
-- ✅ Singleton pattern
-- ✅ Type hints (PHP 8.2)
-- ✅ Namespaces PSR-4
-- ✅ Dependency injection (Database)
-- ✅ Ownership checks
-- ✅ Error handling com try-catch
-- ✅ Logging contextual
+- ✅ **Singleton pattern** - Garante uma única instância de cada Service, evitando múltiplas conexões ao banco e centralizando estado
+- ✅ **Type hints (PHP 8.2)** - Declara tipos de parâmetros e retornos (int, array, string), detectando erros em tempo de desenvolvimento
+- ✅ **Namespaces PSR-4** - Organiza código em namespaces (App\Services) seguindo padrão PSR-4, permitindo autoload automático
+- ✅ **Dependency injection (Database)** - Recebe dependências via construtor ao invés de criar internamente, facilitando testes e manutenção
+- ✅ **Ownership checks** - Verifica se usuário tem permissão para acessar recurso (ex: só pode deletar seus próprios arquivos)
+- ✅ **Error handling com try-catch** - Captura exceções e retorna arrays estruturados {success, message}, evitando crashes
+- ✅ **Logging contextual** - Registra operações importantes com contexto (userId, fileId) para auditoria e debugging
+
+([ver explicação didática](apendice-iniciantes.md#services-layer))
 
 ---
 
@@ -403,6 +487,8 @@ class ClaudeService
     }
 }
 ```
+
+([ver explicação didática](apendice-iniciantes.md#ai-layer))
 
 ---
 
@@ -505,12 +591,14 @@ class Database
 ```
 
 **Características:**
-- ✅ Singleton
-- ✅ PDO preparado statements
-- ✅ Named parameters
-- ✅ Error mode exception
-- ✅ UTF-8 charset
-- ❌ **NÃO** permite queries concatenadas
+- ✅ **Singleton** - Uma única conexão ao banco compartilhada por toda aplicação, economizando recursos e evitando overhead
+- ✅ **PDO prepared statements** - Usa prepared statements para TODAS as queries, prevenindo SQL injection automaticamente
+- ✅ **Named parameters** - Usa placeholders nomeados (:email, :userId) ao invés de posicionais (?), tornando código mais legível
+- ✅ **Error mode exception** - Configura PDO para lançar exceções em erros, permitindo tratamento consistente com try-catch
+- ✅ **UTF-8 charset** - Configura charset utf8mb4 para suportar todos caracteres Unicode (incluindo emojis e acentos)
+- ❌ **NÃO permite queries concatenadas** - Força uso de prepared statements, impossibilitando SQL injection por concatenação
+
+([ver explicação didática](apendice-iniciantes.md#database-layer))
 
 ---
 
@@ -604,41 +692,153 @@ sequenceDiagram
 
 ### 1. Singleton Pattern
 
-**Usado em:** Todos os Services + Database
+Garante que existe apenas **uma instância** de uma classe em toda a aplicação. ([ver explicação didática](apendice-iniciantes.md#singleton-pattern))
 
-**Por quê:**
-- Evita múltiplas conexões ao banco
-- Centraliza configuração
-- Facilita testing (mockable)
+#### Implementação
+
+```php
+class Database
+{
+    private static ?self $instance = null;  // Armazena a única instância
+    private PDO $pdo;
+
+    // Construtor privado - ninguém pode fazer "new Database()"
+    private function __construct()
+    {
+        $this->pdo = new PDO(/* ... */);
+    }
+
+    // Método público para obter a instância
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();  // Cria apenas uma vez
+        }
+        return self::$instance;  // Sempre retorna a mesma
+    }
+}
+```
+
+#### Usado em
+
+- ✅ `Database` - Evita múltiplas conexões
+- ✅ `FileUploadService` - Configuração centralizada
+- ✅ `DocumentProcessorService` - Reutilização
+- ✅ `ConversationService` - Consistência
+
+#### Benefícios
+
+| Benefício | Explicação |
+|-----------|------------|
+| **Performance** | Evita múltiplas conexões ao banco (cada conexão consome ~2MB de memória) |
+| **Consistência** | Todos usam a mesma configuração (mesma API key, mesmo timeout) |
+| **Testabilidade** | Fácil substituir por mock em testes (`Database::$instance = $mockDB`) |
+
+#### Trade-offs
+
+| Problema | Impacto | Mitigação |
+|----------|---------|-----------|
+| Estado compartilhado | Dificulta testes paralelos | Aceitável para MVP (não temos testes paralelos) |
+| Acoplamento global | Pode virar "global variable" | Usar apenas em Services, não em Public Pages |
+| Dificulta DI | Não pode injetar dependências | Aceitável (não usamos DI container) |
+
+#### Quando Reconsiderar?
+
+- ✅ Quando tivermos **testes paralelos** (PHPUnit com `--process-isolation`)
+- ✅ Quando migrarmos para **Dependency Injection Container** (Symfony, Laravel)
+- ✅ Quando precisarmos de **múltiplas conexões** (sharding, read replicas)
+
+---
 
 ### 2. Repository Pattern (Simplificado)
 
-**Usado em:** Database wrapper
+Abstrai o acesso aos dados, separando a lógica de persistência da lógica de negócio. ([ver explicação didática](apendice-iniciantes.md#repository-pattern))
 
-**Por quê:**
-- Abstrai SQL do business logic
-- Facilita mudança de banco
-- Centraliza queries
+#### Usado em
+
+- ✅ `Database` wrapper - Centraliza queries SQL
+- ✅ Métodos `fetchOne`, `fetchAll`, `insert`, `update`
+
+#### Benefícios
+
+| Benefício | Explicação |
+|-----------|------------|
+| **Abstração** | Services não precisam saber detalhes de SQL |
+| **Manutenibilidade** | Mudanças no banco ficam isoladas no Repository |
+| **Testabilidade** | Fácil mockar Database em testes |
+| **Segurança** | Prepared statements centralizados (previne SQL injection) |
+
+#### Trade-offs
+
+| Problema | Impacto | Mitigação |
+|----------|---------|-----------|
+| Menos flexibilidade | Queries complexas podem não caber no padrão | Permitir `query()` direto quando necessário |
+| Overhead | Camada adicional de abstração | Aceitável (ganho em segurança e manutenibilidade) |
+
+---
 
 ### 3. Service Layer Pattern
 
-**Usado em:** Services
+Centraliza a lógica de negócio em classes reutilizáveis, separando-a da apresentação (Public Pages, APIs). ([ver explicação didática](apendice-iniciantes.md#service-layer-pattern))
 
-**Por quê:**
-- Separa business logic da apresentação
-- Reutilizável entre Public Pages e APIs
-- Testável isoladamente
+#### Usado em
+
+- ✅ `FileUploadService` - Upload e validação de arquivos
+- ✅ `DocumentProcessorService` - Extração de texto
+- ✅ `ConversationService` - Gerenciamento de conversas
+- ✅ `ClaudeService` - Integração com IA
+
+#### Benefícios
+
+| Benefício | Explicação |
+|-----------|------------|
+| **Reutilização** | Mesma lógica para Web, API, CLI, Mobile |
+| **Manutenibilidade** | Mudanças em 1 lugar afetam todos os consumidores |
+| **Testabilidade** | Testar lógica isoladamente, sem HTTP/HTML |
+| **Separação de responsabilidades** | Apresentação não mistura com negócio |
+
+#### Trade-offs
+
+| Problema | Impacto | Mitigação |
+|----------|---------|-----------|
+| Mais arquivos | Complexidade inicial maior | Aceitável (ganho em longo prazo) |
+| Curva de aprendizado | Iniciantes podem achar "overengineering" | Documentação didática (esta!) |
+
+---
 
 ### 4. Dependency Injection (Manual)
 
-**Usado em:** Services recebem Database no construtor
+Ao invés de uma classe criar suas dependências internamente, elas são **injetadas** de fora (geralmente no construtor). ([ver explicação didática](apendice-iniciantes.md#dependency-injection))
+
+#### Nossa Implementação (Simplificada)
 
 ```php
+// Usamos DI manual (não temos container)
 private function __construct()
 {
-    $this->db = Database::getInstance();
+    $this->db = Database::getInstance();  // Busca dependência
 }
 ```
+
+**Por que não injetamos no construtor?**
+- Singleton já garante instância única
+- Não temos DI container (Laravel, Symfony)
+- Para MVP, simplicidade > pureza arquitetural
+
+#### Benefícios
+
+| Benefício | Explicação |
+|-----------|------------|
+| **Testabilidade** | Fácil substituir dependências por mocks |
+| **Flexibilidade** | Trocar implementação sem mudar código |
+| **Desacoplamento** | Classe não depende de implementação concreta |
+
+#### Trade-offs
+
+| Problema | Impacto | Mitigação |
+|----------|---------|-----------|
+| Complexidade | Precisa gerenciar dependências manualmente | Aceitável para MVP (poucas dependências) |
+| Boilerplate | Mais código para injetar | Aceitável (ganho em testabilidade) |
 
 ---
 
@@ -646,35 +846,127 @@ private function __construct()
 
 ### Por que não usar Framework?
 
-**Decisão:** PHP puro ao invés de Laravel/Symfony
+**Decisão:** PHP puro ao invés de Laravel/Symfony ([ver explicação didática](apendice-iniciantes.md#por-que-não-usar-framework))
 
-**Razões:**
-1. **MVP-first** - Framework adiciona overhead
-2. **Hospedagem compartilhada** - Composer ok, mas não controle total
-3. **Aprendizado** - Filipe quer entender fundamentos PHP
-4. **Simplicidade** - Menos abstrações = menos magic
+| Aspecto | Framework (Laravel) | PHP Puro (Nossa escolha) |
+|---------|---------------------|--------------------------|
+| **Velocidade inicial** | ⚡ Muito rápida | 🐌 Mais lenta |
+| **Curva de aprendizado** | 📚 Alta (precisa aprender o framework) | 📖 Média (PHP padrão) |
+| **Controle** | 🎛️ Médio (convenções do framework) | 🎯 Total |
+| **Performance** | 🏋️ Overhead (muitas features não usadas) | 🏃 Leve (só o necessário) |
+| **Hospedagem** | 💰 VPS/dedicado recomendado | 💵 Compartilhada ok |
+| **Manutenção** | 🔄 Updates do framework | 🔧 Manual |
 
-**Trade-off aceito:** Menos conveniences, mais controle
+#### Razões da escolha
+
+1. **MVP-first** 🚀
+   - Framework traz 100 features, usamos 10
+   - Overhead de performance desnecessário
+   - Complexidade adicional para MVP
+
+2. **Hospedagem compartilhada** 💰
+   - Hostinger não dá controle total do servidor
+   - Laravel funciona, mas não otimizado
+   - PHP puro roda em qualquer lugar
+
+3. **Aprendizado** 📚
+   - Filipe quer entender **fundamentos** PHP
+   - Framework esconde muita "mágica"
+   - Melhor aprender base antes de framework
+
+4. **Simplicidade** ✨
+   - Menos abstrações = código mais direto
+   - Debugging mais fácil (sem "magic methods")
+   - Stack trace mais curto
+
+#### Trade-off aceito
+
+- ❌ Sem ORM (escrevemos SQL manual)
+- ❌ Sem routing automático (cada arquivo é uma rota)
+- ❌ Sem migrations (SQL manual)
+- ❌ Sem validação built-in (validamos manualmente)
+
+#### Quando reconsiderar?
+
+- ✅ Quando tivermos 10+ desenvolvedores (convenções ajudam)
+- ✅ Quando migrarmos para VPS dedicado
+- ✅ Quando precisarmos de features avançadas (queues, events, etc.)
+
+---
 
 ### Por que Services e não apenas procedural?
 
 **Decisão:** OOP com Services ao invés de funções soltas
 
-**Razões:**
-1. **Reutilização** - Mesma lógica em Public Pages e APIs
-2. **Testabilidade** - Isolar lógica
-3. **Manutenibilidade** - Código organizado
-4. **Escalabilidade** - Fácil adicionar features
+| Aspecto | Procedural (funções) | OOP (Services) |
+|---------|----------------------|----------------|
+| **Organização** | Funções espalhadas | Classes agrupadas por responsabilidade |
+| **Reutilização** | Difícil (precisa include) | Fácil (getInstance) |
+| **Estado** | Variáveis globais | Propriedades privadas |
+| **Testabilidade** | Difícil (dependências globais) | Fácil (mock de dependências) |
+
+#### Razões da escolha
+
+1. **Reutilização** 🔄
+   - Mesma lógica em Public Pages e APIs
+   - Fácil adicionar CLI, Mobile, etc.
+
+2. **Testabilidade** 🧪
+   - Isolar lógica de negócio
+   - Mockar dependências
+
+3. **Manutenibilidade** 🔧
+   - Código organizado por responsabilidade
+   - Fácil encontrar onde mudar
+
+4. **Escalabilidade** 📈
+   - Fácil adicionar features
+   - Fácil refatorar
+
+---
 
 ### Por que PDO Wrapper e não ORM?
 
-**Decisão:** Database wrapper simples ao invés de Eloquent/Doctrine
+**Decisão:** Database wrapper simples ao invés de Eloquent/Doctrine ([ver explicação didática](apendice-iniciantes.md#por-que-não-usar-orm))
 
-**Razões:**
-1. **Performance** - ORM adiciona overhead
-2. **Controle** - Queries explícitas
-3. **Debugging** - SQL visível
-4. **Aprendizado** - Entender SQL real
+| Aspecto | ORM (Eloquent) | PDO Wrapper (Nossa escolha) |
+|---------|----------------|------------------------------|
+| **Produtividade** | ⚡ Alta (menos código) | 🐌 Média (mais código SQL) |
+| **Performance** | 🏋️ Overhead (queries extras) | 🏃 Rápido (queries otimizadas) |
+| **Controle** | 🎛️ Médio (abstração) | 🎯 Total (SQL explícito) |
+| **Debugging** | 🔍 Difícil (SQL gerado) | ✅ Fácil (SQL visível) |
+| **Curva de aprendizado** | 📚 Alta (sintaxe do ORM) | 📖 Média (SQL padrão) |
+
+#### Razões da escolha
+
+1. **Performance** ⚡
+   - ORM gera queries extras (N+1 problem)
+   - Queries otimizadas manualmente
+
+2. **Controle** 🎯
+   - SQL explícito e visível
+   - Fácil otimizar com índices
+
+3. **Debugging** 🔍
+   - Ver exatamente qual SQL está rodando
+   - Copiar SQL e testar no MySQL Workbench
+
+4. **Aprendizado** 📚
+   - Entender SQL real (transferível para qualquer linguagem)
+   - ORM é específico de cada framework
+
+#### Trade-off aceito
+
+- ❌ Mais código (escrever SQL manual)
+- ❌ Sem lazy loading automático
+- ❌ Sem eager loading automático
+- ❌ Sem relationships automáticos
+
+#### Quando reconsiderar?
+
+- ✅ Quando tivermos 50+ tabelas (ORM ajuda em relacionamentos complexos)
+- ✅ Quando precisarmos de migrations automáticas
+- ✅ Quando tivermos múltiplos bancos (MySQL, PostgreSQL, SQLite)
 
 ---
 
@@ -684,3 +976,4 @@ private function __construct()
     <a href="03-stack.md">Stack Tecnológico →</a>
   </p>
 </div>
+

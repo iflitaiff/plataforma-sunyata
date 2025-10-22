@@ -23,6 +23,7 @@
 * 📚 **Referência**
   * [Glossário Técnico](glossario.md)
   * [Changelog](11-changelog.md)
+  * [Apêndice A: Guia Iniciantes](apendice-iniciantes.md)
 
 ---
 
