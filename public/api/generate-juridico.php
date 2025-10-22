@@ -61,7 +61,7 @@ if (empty($input['tarefa']) || empty($input['contexto'])) {
 }
 
 try {
-    // Construir prompt (mesma lógica do JS original)
+    // Construir prompt melhorado (Sprint 3.5 - Chain-of-thought + Examples + Formatação)
     $prompt = "Você é um advogado sênior especializado em grandes escritórios com vasta experiência em advocacia empresarial e conhecimento profundo da prática jurídica brasileira.\n\n";
 
     $prompt .= "**TAREFA/OBJETIVO JURÍDICO:**\n" . $input['tarefa'] . "\n\n";
@@ -83,14 +83,48 @@ try {
         $prompt .= "**CRITÉRIOS DE QUALIDADE:**\n" . $input['criterios'] . "\n\n";
     }
 
+    // Chain-of-thought simplificado
+    $prompt .= "**METODOLOGIA DE ANÁLISE:**\n";
+    $prompt .= "Antes de formular suas perguntas, considere internamente:\n";
+    $prompt .= "1. Qual a complexidade jurídica envolvida?\n";
+    $prompt .= "2. Quais informações são críticas vs. complementares?\n";
+    $prompt .= "3. Quais riscos jurídicos precisam ser mapeados?\n";
+    $prompt .= "4. Qual o nível de profundidade técnica adequado ao cliente?\n\n";
+
+    // Examples (2 apenas - um simples + um complexo)
+    $prompt .= "**EXEMPLOS DE BOA INTERAÇÃO:**\n\n";
+
+    $prompt .= "Exemplo 1 (Caso Simples):\n";
+    $prompt .= "Tarefa: \"Revisar cláusula de confidencialidade\"\n";
+    $prompt .= "Perguntas adequadas:\n";
+    $prompt .= "1. O contrato é nacional ou internacional?\n";
+    $prompt .= "2. Há transferência de dados pessoais (LGPD aplicável)?\n";
+    $prompt .= "3. Qual o prazo de vigência da confidencialidade desejado?\n\n";
+
+    $prompt .= "Exemplo 2 (Caso Complexo):\n";
+    $prompt .= "Tarefa: \"Estruturar fusão entre empresas\"\n";
+    $prompt .= "Perguntas adequadas:\n";
+    $prompt .= "1. Há necessidade de aprovação CADE (faturamento >R$750MM)?\n";
+    $prompt .= "2. As empresas têm passivos trabalhistas ou tributários relevantes?\n";
+    $prompt .= "3. A estrutura será incorporação, aquisição ou joint venture?\n";
+    $prompt .= "4. Há sócios minoritários que precisam ser consultados?\n\n";
+
+    // Formatação estruturada
+    $prompt .= "**FORMATO DE RESPOSTA ESPERADO:**\n";
+    $prompt .= "Estruture suas perguntas de forma:\n";
+    $prompt .= "- Numeradas sequencialmente (1, 2, 3...)\n";
+    $prompt .= "- Objetivas e diretas\n";
+    $prompt .= "- Priorizadas por criticidade (perguntas essenciais primeiro)\n";
+    $prompt .= "- Contextualizadas (explique brevemente POR QUE precisa da informação)\n";
+    $prompt .= "- Limitadas a 3-5 perguntas por rodada (evite sobrecarregar o usuário)\n\n";
+
     $prompt .= "**INSTRUÇÕES IMPORTANTES:**\n";
     $prompt .= "- Mantenha rigor técnico-jurídico e aderência às melhores práticas de grandes escritórios\n";
     $prompt .= "- Considere sempre aspectos práticos de implementação e viabilidade econômica\n";
     $prompt .= "- Base suas sugestões na legislação brasileira vigente e jurisprudência consolidada\n";
-    $prompt .= "- Estruture sua resposta de forma profissional e diretamente aplicável\n";
     $prompt .= "- Se alguma informação essencial estiver ausente, questione antes de prosseguir\n\n";
 
-    $prompt .= "Faça-me perguntas indexadas, sequenciais, uma por vez até que você julgue entender o suficiente do contexto da tarefa, da qualidade esperada de sua resposta e interação comigo.";
+    $prompt .= "Agora, faça suas perguntas seguindo a metodologia e o formato acima.";
 
     // Chamar Claude API via ClaudeService
     $claudeService = new ClaudeService();
