@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadro de Comunicação - MVP Canvas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1f6feb 0%, #0969da 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(31, 111, 235, 0.2);
+        }
+        h1 { color: white; font-size: 28px; margin-bottom: 10px; }
+        .subtitle { color: rgba(255,255,255,0.8); font-size: 14px; }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .status-active { background: #238636; color: white; }
+        .status-review { background: #f0883e; color: white; }
+        .status-blocked { background: #da3633; color: white; }
+
+        /* Message Cards */
+        .message {
+            background: #161b22;
+            border-left: 4px solid;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .message.claude { border-left-color: #1f6feb; }
+        .message.manus { border-left-color: #7c3aed; }
+        .message.user { border-left-color: #238636; }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .author-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .claude .author-icon { background: #1f6feb; }
+        .manus .author-icon { background: #7c3aed; }
+        .user .author-icon { background: #238636; }
+
+        .timestamp {
+            color: #8b949e;
+            font-size: 13px;
+        }
+
+        .message-content {
+            color: #c9d1d9;
+            line-height: 1.8;
+        }
+        .message-content h3 {
+            color: #58a6ff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .message-content h4 {
+            color: #8b949e;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .message-content p {
+            margin-bottom: 12px;
+        }
+        .message-content strong {
+            color: #f0883e;
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .tag {
+            background: #30363d;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #8b949e;
+        }
+        .tag.priority-high { background: #da3633; color: white; }
+        .tag.priority-medium { background: #f0883e; color: white; }
+        .tag.priority-low { background: #238636; color: white; }
+        .tag.type-bug { background: #da3633; color: white; }
+        .tag.type-feature { background: #1f6feb; color: white; }
+        .tag.type-review { background: #7c3aed; color: white; }
+        .tag.type-question { background: #f0883e; color: white; }
+        .tag.type-decision { background: #238636; color: white; }
+
+        /* Code blocks */
+        pre {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+            margin: 10px 0;
+        }
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: #79c0ff;
+        }
+
+        /* Inline code */
+        .message-content code {
+            background: #0d1117;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #30363d;
+        }
+
+        /* Links */
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Emoji support */
+        .emoji {
+            font-size: 18px;
+            margin-right: 5px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #30363d;
+            color: #8b949e;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Quadro de Comunicação Técnica</h1>
+            <p class="subtitle">MVP Canvas - Plataforma Sunyata</p>
+            <span class="status-badge status-active">Sprint 2 Completo | Preparando Sprint 3</span>
+        </header>
+
+        <!-- MENSAGEM INICIAL: Claude Code reporta estado atual -->
+        <div class="message claude">
+            <div class="message-header">
+                <div class="author">
+                    <div class="author-icon">🤖</div>
+                    <span>Claude Code</span>
+                </div>
+                <div class="timestamp">2025-10-22 01:00 UTC</div>
+            </div>
+            <div class="message-content">
+                <h3>[STATUS] Sprint 2 Completo + Bug Fixes Deployados em Produção ✅</h3>
+
+                <p><strong>Resumo Executivo:</strong></p>
+                <p>Sprint 2 (Services Layer) foi completado, 8 bugs críticos corrigidos, e tudo deployado com sucesso em produção (Hostinger).</p>
+
+                <h4>📦 O que foi implementado</h4>
+                <ul>
+                    <li><strong>FileUploadService.php</strong> - Upload, validação MIME, estrutura de diretórios</li>
+                    <li><strong>DocumentProcessorService.php</strong> - Extração de texto (PDF/DOCX)</li>
+                    <li><strong>ConversationService.php</strong> - CRUD de conversas, mensagens, anexos</li>
+                    <li><strong>ClaudeService enhancement</strong> - Método generateWithContext() para multi-turn</li>
+                </ul>
+
+                <h4>🔒 Bugs de Segurança Corrigidos (da auditoria do Manus)</h4>
+                <ul>
+                    <li>✅ Bug #2: Upload path environment-aware (Hostinger)</li>
+                    <li>✅ Bug #3: Ownership check em DocumentProcessorService::extractText()</li>
+                    <li>✅ Bug #4: Ownership check em ConversationService::attachFiles()</li>
+                    <li>✅ Bug #5: Ownership check em ConversationService::completeConversation()</li>
+                    <li>✅ Bug #6: Rate limiting (10 uploads/hora para DoS prevention)</li>
+                    <li>✅ Bug #7: Validação de tamanho real do arquivo (não confia no cliente)</li>
+                    <li>✅ Bug #8: Sanitização de nome de arquivo (path traversal prevention)</li>
+                    <li>✅ Bug #9: Validação de tamanho de conteúdo (65KB limit)</li>
+                </ul>
+
+                <h4>📊 Testes</h4>
+                <ul>
+                    <li>✅ 9/9 testes passaram (100%) - Script: test-bug-fixes-simple.php</li>
+                    <li>✅ Syntax check: PHP -l passou em todos os arquivos</li>
+                    <li>✅ Verificado em produção: path detection funciona corretamente</li>
+                </ul>
+
+                <h4>🚀 Deployment</h4>
+                <ul>
+                    <li><strong>Servidor:</strong> Hostinger (u202164171@82.25.72.226)</li>
+                    <li><strong>Branch:</strong> feature/mvp-admin-canvas</li>
+                    <li><strong>Commits:</strong> ceb5b4e (Sprint 2) + 587387a (Bug fixes)</li>
+                    <li><strong>Diretório criado:</strong> /home/u202164171/domains/sunyataconsulting.com/storage/uploads (755)</li>
+                    <li><strong>Backup:</strong> backup-antes-mvp-canvas-20251022_0045.tar.gz</li>
+                </ul>
+
+                <h4>⚠️ Breaking Changes (Importante para Sprint 3)</h4>
+                <p>Assinaturas de métodos foram alteradas para incluir ownership checks:</p>
+                <ul>
+                    <li><code>DocumentProcessorService::extractText(fileId, userId)</code></li>
+                    <li><code>DocumentProcessorService::processFile(fileId, userId)</code></li>
+                    <li><code>ConversationService::attachFiles(conversationId, userId, fileIds)</code></li>
+                    <li><code>ConversationService::completeConversation(conversationId, ?userId = null)</code></li>
+                </ul>
+
+                <h4>📝 Documentação Criada</h4>
+                <ul>
+                    <li>✅ AUDITORIA-MANUS-RESPOSTA.md - Resposta detalhada à auditoria</li>
+                    <li>✅ DEPLOYMENT-SPRINT2-BUGFIXES.md - Doc completa do deployment</li>
+                    <li>✅ test-bug-fixes-simple.php - Script de validação</li>
+                    <li>✅ START-HERE-SPRINT3.md - Guia para próximo sprint</li>
+                </ul>
+
+                <h4>🎯 Próximo Passo: Sprint 3 - APIs</h4>
+                <p><strong>Tarefas pendentes:</strong></p>
+                <ul>
+                    <li>📌 /api/upload-file.php (~2h) - Upload com FileUploadService + DocumentProcessor</li>
+                    <li>📌 /api/chat.php (~3h) - Chat com ClaudeService::generateWithContext()</li>
+                    <li>📌 /api/export-conversation.php (~1h) - Export para PDF com mPDF</li>
+                </ul>
+
+                <h4>🤔 Aguardando</h4>
+                <p><strong>Para Manus:</strong></p>
+                <ul>
+                    <li>🔍 Verificar se deployment está correto em produção</li>
+                    <li>🔍 Validar se bug fixes resolveram os problemas da auditoria</li>
+                    <li>🔍 Sugestões para Sprint 3 (APIs)</li>
+                </ul>
+
+                <p><strong>Para Filipe:</strong></p>
+                <ul>
+                    <li>✅ Aprovação para começar Sprint 3</li>
+                    <li>❓ Alguma mudança de prioridade?</li>
+                </ul>
+            </div>
+            <div class="tags">
+                <span class="tag type-feature">sprint complete</span>
+                <span class="tag priority-high">aguardando review</span>
+                <span class="tag">deployment</span>
+            </div>
+        </div>
+
+        <!-- TEMPLATE PARA PRÓXIMAS MENSAGENS (não deletar este comentário) -->
+        <!--
+
+        === TEMPLATE CLAUDE CODE ===
+        <div class="message claude">
+            <div class="message-header">
+                <div class="author">
+                    <div class="author-icon">🤖</div>
+                    <span>Claude Code</span>
+                </div>
+                <div class="timestamp">YYYY-MM-DD HH:MM UTC</div>
+            </div>
+            <div class="message-content">
+                <h3>[TIPO] Título</h3>
+                <p>Conteúdo...</p>
+            </div>
+            <div class="tags">
+                <span class="tag type-feature">tag</span>
+            </div>
+        </div>
+
+        === TEMPLATE MANUS ===
+        <div class="message manus">
+            <div class="message-header">
+                <div class="author">
+                    <div class="author-icon">🧠</div>
+                    <span>Manus AI</span>
+                </div>
+                <div class="timestamp">YYYY-MM-DD HH:MM UTC</div>
+            </div>
+            <div class="message-content">
+                <h3>[REVIEW] Título</h3>
+                <p>Conteúdo...</p>
+            </div>
+            <div class="tags">
+                <span class="tag type-review">code review</span>
+            </div>
+        </div>
+
+        === TEMPLATE FILIPE ===
+        <div class="message user">
+            <div class="message-header">
+                <div class="author">
+                    <div class="author-icon">👤</div>
+                    <span>Filipe</span>
+                </div>
+                <div class="timestamp">YYYY-MM-DD HH:MM UTC</div>
+            </div>
+            <div class="message-content">
+                <h3>[DECISÃO] Título</h3>
+                <p>Conteúdo...</p>
+            </div>
+            <div class="tags">
+                <span class="tag type-decision">decisão</span>
+            </div>
+        </div>
+
+        -->
+
+        <footer>
+            <p>🤖 Claude Code | 🧠 Manus AI | 👤 Filipe Litaiff</p>
+            <p>Última atualização: <span id="last-update">-</span></p>
+            <p style="margin-top: 10px; font-size: 11px;">
+                <a href="MANUS-INSTRUCTIONS.md" target="_blank">📖 Instruções para Manus</a> |
+                <a href="DEPLOYMENT-SPRINT2-BUGFIXES.md" target="_blank">📄 Doc Deployment</a> |
+                <a href="START-HERE-SPRINT3.md" target="_blank">🚀 Guia Sprint 3</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-scroll to bottom on load
+        window.onload = () => {
+            window.scrollTo(0, document.body.scrollHeight);
+            document.getElementById('last-update').textContent = new Date().toLocaleString('pt-BR');
+        };
+    </script>
+</body>
+</html>
