@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Plataforma Sunyata - Documentação Técnica</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Documentação técnica completa da Plataforma Sunyata">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+
+  <!-- Theme: GitHub Dark -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css">
+
+  <!-- Custom CSS -->
+  <style>
+    :root {
+      --base-font-size: 15px;
+      --theme-color: #1f6feb;
+      --sidebar-width: 280px;
+    }
+
+    .app-name-link img {
+      width: 32px;
+      margin-right: 10px;
+    }
+
+    .markdown-section {
+      max-width: 900px;
+      padding: 30px 15px 40px;
+    }
+
+    /* Mermaid diagrams */
+    .mermaid {
+      background: #161b22;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    /* Tables */
+    .markdown-section table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .markdown-section th {
+      background: #1f6feb;
+      color: white;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .markdown-section td {
+      padding: 10px;
+      border: 1px solid #30363d;
+    }
+
+    /* Code blocks */
+    .markdown-section pre {
+      background: #0d1117;
+      border: 1px solid #30363d;
+    }
+
+    /* Glossary terms */
+    .glossary-term {
+      background: #1f6feb22;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 0 4px;
+    }
+    .badge-done { background: #238636; color: white; }
+    .badge-wip { background: #f0883e; color: white; }
+    .badge-planned { background: #8b949e; color: white; }
+  </style>
+</head>
+<body>
+  <div id="app">Carregando...</div>
+
+  <script>
+    window.$docsify = {
+      name: '📖 Plataforma Sunyata',
+      repo: 'https://github.com/iflitaiff/plataforma-sunyata',
+      loadSidebar: true,
+      loadNavbar: true,
+      subMaxLevel: 3,
+      auto2top: true,
+
+      // Search plugin
+      search: {
+        maxAge: 86400000, // 1 day
+        paths: 'auto',
+        placeholder: 'Buscar...',
+        noData: 'Nenhum resultado encontrado.',
+        depth: 3,
+        hideOtherSidebarContent: false
+      },
+
+      // Mermaid plugin
+      mermaid: {
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#1f6feb',
+          primaryTextColor: '#c9d1d9',
+          primaryBorderColor: '#30363d',
+          lineColor: '#8b949e',
+          secondaryColor: '#238636',
+          tertiaryColor: '#0d1117',
+          background: '#161b22',
+          mainBkg: '#161b22',
+          secondBkg: '#0d1117',
+          textColor: '#c9d1d9',
+          fontSize: '14px'
+        }
+      },
+
+      // Copy code plugin
+      copyCode: {
+        buttonText: 'Copiar',
+        errorText: 'Erro',
+        successText: 'Copiado!'
+      },
+
+      // Pagination
+      pagination: {
+        previousText: '← Anterior',
+        nextText: 'Próximo →',
+        crossChapter: true
+      },
+
+      // Footer
+      plugins: [
+        function(hook, vm) {
+          hook.beforeEach(function(html) {
+            // Add last updated info
+            const lastUpdate = new Date().toLocaleString('pt-BR');
+            return html +
+              '\n\n---\n\n' +
+              '<div style="text-align: center; color: #8b949e; font-size: 12px; margin-top: 40px;">' +
+              '<p>📅 Última atualização: ' + lastUpdate + '</p>' +
+              '<p>🤖 Gerado por Claude Code | 👤 Filipe Litaiff</p>' +
+              '<p><a href="https://portal.sunyataconsulting.com/COMM-BOARD.html" target="_blank">📋 Ver COMM-BOARD</a> | ' +
+              '<a href="https://github.com/iflitaiff/plataforma-sunyata" target="_blank">💻 Repositório GitHub</a></p>' +
+              '</div>';
+          })
+        }
+      ]
+    }
+  </script>
+
+  <!-- Docsify core -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+
+  <!-- Plugins -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination@2/dist/docsify-pagination.min.js"></script>
+
+  <!-- Mermaid -->
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark'
+    });
+    window.mermaid = mermaid;
+  </script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-mermaid@2/dist/docsify-mermaid.js"></script>
+
+  <!-- Syntax highlighting -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-php.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-sql.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-javascript.min.js"></script>
+</body>
+</html>
