@@ -30,28 +30,36 @@ if ($user_vertical !== 'juridico' && !$is_demo && !$is_admin) {
 
 // Definição das ferramentas desta vertical
 $ferramentas = array (
-  0 => 
+  0 =>
   array (
     'id' => 'canvas-juridico',
     'nome' => 'Canvas Jurídico',
     'descricao' => 'Estruturação de peças e análises jurídicas',
     'icone' => '📋',
   ),
-  1 => 
+  1 =>
+  array (
+    'id' => 'canvas-juridico-v2',
+    'nome' => 'Canvas Jurídico v2 (Beta)',
+    'descricao' => 'Nova versão com upload de documentos e assistente interativo',
+    'icone' => '📋✨',
+    'badge' => 'BETA',
+  ),
+  2 =>
   array (
     'id' => 'guia-prompts-juridico',
     'nome' => 'Guia de Prompts (Jurídico)',
     'descricao' => 'Prompts especializados para Direito',
     'icone' => '📖',
   ),
-  2 => 
+  3 =>
   array (
     'id' => 'padroes-avancados-juridico',
     'nome' => 'Padrões Avançados (Jurídico)',
     'descricao' => 'Técnicas avançadas para área jurídica',
     'icone' => '⚡',
   ),
-  3 => 
+  4 =>
   array (
     'id' => 'repositorio-prompts',
     'nome' => 'Repositório de Prompts',
@@ -86,6 +94,7 @@ $pageTitle = 'Vertical: Jurídico';
             transition: all 0.3s ease;
             height: 100%;
             border: 2px solid transparent;
+            position: relative;
         }
         .tool-card:hover {
             transform: translateY(-5px);
@@ -95,6 +104,18 @@ $pageTitle = 'Vertical: Jurídico';
         .tool-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
+        }
+        .beta-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
     </style>
 </head>
@@ -137,6 +158,9 @@ $pageTitle = 'Vertical: Jurídico';
                 <div class="col-md-6 col-lg-4">
                     <a href="<?= $ferramenta['url'] ?>" class="text-decoration-none">
                         <div class="card tool-card">
+                            <?php if (isset($ferramenta['badge'])): ?>
+                                <span class="beta-badge"><?= $ferramenta['badge'] ?></span>
+                            <?php endif; ?>
                             <div class="card-body text-center p-4">
                                 <div class="tool-icon"><?= $ferramenta['icone'] ?></div>
                                 <h5 class="card-title"><?= $ferramenta['nome'] ?></h5>
