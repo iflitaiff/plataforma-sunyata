@@ -37,28 +37,26 @@ if (!isset($_FILES['file'])) {
 }
 
 try {
-    $fileService = new FileUploadService();
+    $fileService = FileUploadService::getInstance();
 
-    // Upload do arquivo
+    // Upload do arquivo (FileUploadService já faz todas as validações)
     $result = $fileService->uploadFile(
-        file: $_FILES['file'],
-        userId: $_SESSION['user_id'],
-        vertical: $_SESSION['user']['selected_vertical'] ?? 'juridico',
-        context: 'canvas_upload'
+        fileData: $_FILES['file'],
+        userId: (int)$_SESSION['user_id']
     );
 
     if ($result['success']) {
         // Formato esperado pelo SurveyJS
         echo json_encode([
             'file' => [
-                'name' => $result['file_name'],
-                'type' => $result['mime_type'],
+                'name' => basename($result['file_id'] ?? 'uploaded_file'),
+                'type' => 'application/octet-stream',
                 'content' => $result['file_id'], // SurveyJS armazena ID no form data
             ]
         ]);
     } else {
         http_response_code(400);
-        echo json_encode(['error' => $result['error'] ?? 'Erro ao fazer upload']);
+        echo json_encode(['error' => $result['message'] ?? 'Erro ao fazer upload']);
     }
 
 } catch (Exception $e) {

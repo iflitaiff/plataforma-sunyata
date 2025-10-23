@@ -51,9 +51,9 @@ if (!$canvasId || !$formData) {
 try {
     $db = Database::getInstance();
 
-    // Buscar canvas template
+    // Buscar canvas template (incluindo form_config para validação)
     $canvas = $db->fetchOne("
-        SELECT id, slug, name, system_prompt, user_prompt_template, max_questions
+        SELECT id, slug, name, system_prompt, user_prompt_template, max_questions, form_config
         FROM canvas_templates
         WHERE id = :id AND is_active = 1
     ", ['id' => $canvasId]);
@@ -63,6 +63,44 @@ try {
         echo json_encode(['success' => false, 'error' => 'Canvas não encontrado']);
         exit;
     }
+
+    // CRÍTICO 3 FIX: Validar form_data contra form_config
+    $formConfig = json_decode($canvas['form_config'], true);
+    if (!$formConfig || !isset($formConfig['pages'])) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Configuração do canvas inválida']);
+        exit;
+    }
+
+    // Extrair campos permitidos do form_config
+    $allowedFields = [];
+    foreach ($formConfig['pages'] as $page) {
+        if (isset($page['elements'])) {
+            foreach ($page['elements'] as $element) {
+                if (isset($element['name'])) {
+                    $allowedFields[] = $element['name'];
+                }
+            }
+        }
+    }
+
+    // Filtrar form_data para conter apenas campos permitidos
+    $validatedFormData = [];
+    foreach ($formData as $key => $value) {
+        if (in_array($key, $allowedFields)) {
+            // Limite de tamanho por campo (anti-DoS)
+            if (is_string($value)) {
+                $validatedFormData[$key] = substr($value, 0, 10000); // Max 10k chars por campo
+            } elseif (is_array($value)) {
+                $validatedFormData[$key] = array_slice($value, 0, 100); // Max 100 items em arrays
+            } else {
+                $validatedFormData[$key] = $value;
+            }
+        }
+    }
+
+    // Usar dados validados daqui pra frente
+    $formData = $validatedFormData;
 
     // Construir prompt do usuário substituindo placeholders
     $userPrompt = $canvas['user_prompt_template'];

@@ -14,15 +14,33 @@ use Sunyata\Core\Database;
 
 require_login();
 
+// IMPORTANTE 4 FIX: Revalidar vertical no banco (não confiar apenas na sessão)
+$db = Database::getInstance();
+$user = $db->fetchOne("
+    SELECT selected_vertical, is_demo, access_level
+    FROM users
+    WHERE id = :user_id
+", ['user_id' => $_SESSION['user_id']]);
+
+if (!$user) {
+    $_SESSION['error'] = 'Usuário não encontrado';
+    redirect(BASE_URL . '/login.php');
+}
+
+// Atualizar sessão com dados do banco (fonte confiável)
+$_SESSION['user']['selected_vertical'] = $user['selected_vertical'];
+$_SESSION['user']['is_demo'] = $user['is_demo'];
+$_SESSION['user']['access_level'] = $user['access_level'];
+
 // Verificar acesso à vertical
-if (!isset($_SESSION['user']['selected_vertical'])) {
+if (!$user['selected_vertical']) {
     $_SESSION['error'] = 'Por favor, complete o onboarding primeiro';
     redirect(BASE_URL . '/onboarding-step1.php');
 }
 
-$user_vertical = $_SESSION['user']['selected_vertical'];
-$is_demo = $_SESSION['user']['is_demo'] ?? false;
-$is_admin = ($_SESSION['user']['access_level'] ?? 'guest') === 'admin';
+$user_vertical = $user['selected_vertical'];
+$is_demo = $user['is_demo'] ?? false;
+$is_admin = ($user['access_level'] ?? 'guest') === 'admin';
 
 // Verificar se tem acesso (vertical juridico OU usuário demo)
 if ($user_vertical !== 'juridico' && !$is_demo && !$is_admin) {
@@ -30,8 +48,7 @@ if ($user_vertical !== 'juridico' && !$is_demo && !$is_admin) {
     redirect(BASE_URL . '/dashboard.php');
 }
 
-// Buscar configuração do canvas no banco
-$db = Database::getInstance();
+// Buscar configuração do canvas no banco (reutilizando $db)
 $canvas = $db->fetchOne("
     SELECT id, slug, name, form_config, system_prompt, user_prompt_template, max_questions
     FROM canvas_templates
@@ -235,7 +252,8 @@ $pageTitle = $canvas['name'];
 
             try {
                 // Configuração do formulário SurveyJS do banco
-                const surveyJson = <?= json_encode($formConfig) ?>;
+                // Flags de segurança contra XSS: JSON_HEX_TAG, JSON_HEX_AMP, etc.
+                const surveyJson = <?= json_encode($formConfig, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
                 console.log('Survey config loaded:', surveyJson);
 
                 // Criar survey
