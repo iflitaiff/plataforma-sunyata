@@ -2,7 +2,7 @@
 
 **Leia PRIMEIRO ao iniciar nova sessão!**
 
-**Versão:** 3.1 | **Atualizado:** 2025-10-23
+**Versão:** 3.2 | **Atualizado:** 2025-10-23
 
 > ⚠️ **Nota:** Este arquivo é uma cópia da documentação oficial mantida em https://portal.sunyataconsulting.com/comm/#/docs/START-HERE
 
@@ -143,6 +143,33 @@ cat /home/u202164171/ai-comm/NNNN-*.md
 3. **Documentar** decisões importantes
 4. **Testar** antes de deploy
 5. **Comunicar** mudanças significativas
+
+---
+
+## 🛡️ Status Atual do Projeto
+
+### Canvas v2 - Seguro para MVP
+**Última atualização:** 2025-10-23
+
+**Status:** ✅ Pronto para produção (até 5 usuários)
+
+**Segurança:**
+- 🔴 **Críticos corrigidos (3/3):**
+  - XSS via form_config (JSON escape)
+  - Upload sem validação (FileUploadService)
+  - form_data sem validação (whitelist + limites)
+- 🟡 **Importantes corrigidos (2/2):**
+  - Access control (revalidação no banco)
+  - Logging (error_log em falhas)
+- 🟢 **Sugestões implementadas (1/4):**
+  - Limites SurveyJS (10k chars, 10MB)
+
+**Pendente (antes de escalar 50+ usuários):**
+- Schema validation do form_config
+- Rate limiting do submit (30/hora)
+- Verificar htmlspecialchars em helpers.php
+
+**Commit:** `55e681c` - fix(security): Apply Codex security review fixes
 
 ---
 
