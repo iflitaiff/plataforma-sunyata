@@ -1,0 +1,99 @@
+{
+  "title": "Canvas Docente - Planejamento de Aula",
+  "description": "Ferramenta para criar planos de aula assistidos por IA",
+  "logoPosition": "right",
+  "pages": [
+    {
+      "name": "page1",
+      "elements": [
+        {
+          "type": "html",
+          "name": "introducao",
+          "html": "<div class='alert alert-info'><strong>Canvas Docente</strong><br>Crie planos de aula personalizados com auxílio de IA pedagógica.</div>"
+        },
+        {
+          "type": "text",
+          "name": "disciplina",
+          "title": "Disciplina",
+          "isRequired": true,
+          "placeholder": "Ex: Matemática, História do Brasil, Química Orgânica"
+        },
+        {
+          "type": "text",
+          "name": "serie_turma",
+          "title": "Série/Turma",
+          "isRequired": true,
+          "placeholder": "Ex: 9º ano EF, 2ª série EM, 3º período Engenharia"
+        },
+        {
+          "type": "comment",
+          "name": "objetivo_aula",
+          "title": "Objetivo da Aula",
+          "description": "O que os alunos devem aprender?",
+          "isRequired": true,
+          "rows": 4,
+          "placeholder": "Ex: Compreender o conceito de função quadrática e sua representação gráfica, identificando vértice e raízes."
+        },
+        {
+          "type": "dropdown",
+          "name": "duracao",
+          "title": "Duração da Aula",
+          "isRequired": true,
+          "choices": [
+            { "value": "50min", "text": "50 minutos (1 tempo)" },
+            { "value": "100min", "text": "100 minutos (2 tempos)" },
+            { "value": "150min", "text": "150 minutos (3 tempos)" },
+            { "value": "custom", "text": "Outra duração" }
+          ]
+        },
+        {
+          "type": "text",
+          "name": "duracao_custom",
+          "title": "Especifique a duração",
+          "visibleIf": "{duracao} = 'custom'",
+          "isRequired": true,
+          "inputType": "number",
+          "placeholder": "Duração em minutos"
+        },
+        {
+          "type": "checkbox",
+          "name": "recursos_disponiveis",
+          "title": "Recursos Disponíveis",
+          "description": "Selecione os recursos que você pode utilizar",
+          "choices": [
+            "Datashow/Projetor",
+            "Laboratório de Informática",
+            "Laboratório de Ciências",
+            "Material impresso",
+            "Internet/Wi-Fi",
+            "Quadro branco",
+            "Materiais manipuláveis"
+          ]
+        },
+        {
+          "type": "file",
+          "name": "materiais",
+          "title": "Materiais de Apoio (opcional)",
+          "description": "Anexe slides, textos, exercícios que deseja incluir",
+          "allowMultiple": true,
+          "acceptedTypes": "application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx",
+          "maxSize": 10485760,
+          "storeDataAsText": false,
+          "waitForUpload": true
+        },
+        {
+          "type": "comment",
+          "name": "observacoes",
+          "title": "Observações/Contexto Adicional",
+          "description": "Características da turma, dificuldades conhecidas, etc.",
+          "rows": 3,
+          "placeholder": "Ex: Turma tem dificuldade com álgebra básica. 30% dos alunos têm déficit de atenção. Preferem atividades práticas."
+        }
+      ]
+    }
+  ],
+  "showQuestionNumbers": "off",
+  "questionsOnPageMode": "singlePage",
+  "completeText": "Gerar Plano de Aula",
+  "widthMode": "responsive"
+}

@@ -1,0 +1,96 @@
+{
+  "title": "Canvas Jurídico Geral",
+  "description": "Ferramenta para análise jurídica assistida por IA com upload de documentos",
+  "logoPosition": "right",
+  "pages": [
+    {
+      "name": "page1",
+      "elements": [
+        {
+          "type": "html",
+          "name": "introducao",
+          "html": "<div class='alert alert-info'><strong>Bem-vindo ao Canvas Jurídico!</strong><br>Preencha os campos abaixo para receber análise jurídica assistida por IA. Você pode anexar documentos (PDF, DOCX) e responder até 5 perguntas contextuais para otimizar o resultado.</div>"
+        },
+        {
+          "type": "text",
+          "name": "tarefa",
+          "title": "Tarefa/Objetivo Jurídico",
+          "description": "Descreva o objetivo principal desta análise jurídica",
+          "isRequired": true,
+          "maxLength": 500,
+          "placeholder": "Ex: Elaborar parecer sobre rescisão antecipada de contrato de locação comercial"
+        },
+        {
+          "type": "comment",
+          "name": "contexto",
+          "title": "Contexto & Cliente",
+          "description": "Forneça informações sobre o cliente e contexto do caso",
+          "isRequired": true,
+          "rows": 5,
+          "maxLength": 2000,
+          "placeholder": "Ex: Cliente é pessoa jurídica do ramo alimentício, locatária de imóvel comercial há 3 anos. Deseja encerrar contrato 18 meses antes do término por mudança de estratégia empresarial."
+        },
+        {
+          "type": "file",
+          "name": "documentos",
+          "title": "Upload de Documentos",
+          "description": "Anexe documentos relevantes (contratos, notificações, jurisprudência, etc.)",
+          "allowMultiple": true,
+          "acceptedTypes": "application/pdf,.pdf,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx",
+          "maxSize": 10485760,
+          "storeDataAsText": false,
+          "waitForUpload": true,
+          "filePlaceholder": "Clique ou arraste arquivos aqui (PDF, DOC, DOCX - máx. 10MB cada)"
+        },
+        {
+          "type": "comment",
+          "name": "entradas",
+          "title": "Materiais/Entradas Disponíveis",
+          "description": "Liste documentos, informações ou recursos já disponíveis",
+          "isRequired": false,
+          "rows": 4,
+          "maxLength": 1500,
+          "placeholder": "Ex: Contrato de locação original, e-mails trocados com locador, cláusula penal específica (cláusula 12.3), jurisprudência local sobre tema."
+        },
+        {
+          "type": "comment",
+          "name": "restricoes",
+          "title": "Restrições & Marco Legal",
+          "description": "Indique limitações, prazos, marco regulatório aplicável",
+          "isRequired": false,
+          "rows": 4,
+          "maxLength": 1500,
+          "placeholder": "Ex: Lei do Inquilinato (Lei 8.245/91), prazo de 30 dias para negociação, evitar litígio judicial se possível."
+        },
+        {
+          "type": "comment",
+          "name": "saida",
+          "title": "Formato da Entrega Desejado",
+          "description": "Como você deseja receber o resultado?",
+          "isRequired": false,
+          "rows": 3,
+          "maxLength": 1000,
+          "placeholder": "Ex: Parecer jurídico estruturado com: (1) Análise da viabilidade, (2) Riscos jurídicos, (3) Estratégia de negociação recomendada, (4) Minutas de notificação."
+        },
+        {
+          "type": "comment",
+          "name": "criterios",
+          "title": "Critérios de Qualidade/Sucesso",
+          "description": "Como avaliar se o resultado atende suas expectativas?",
+          "isRequired": false,
+          "rows": 3,
+          "maxLength": 1000,
+          "placeholder": "Ex: Fundamentação legal sólida, linguagem acessível ao cliente, análise de jurisprudência recente do TJRJ, identificação clara de riscos financeiros."
+        }
+      ]
+    }
+  ],
+  "showQuestionNumbers": "off",
+  "questionsOnPageMode": "singlePage",
+  "showProgressBar": "top",
+  "progressBarType": "questions",
+  "completeText": "Iniciar Análise com IA",
+  "completedHtml": "<div class='alert alert-success'><strong>Formulário enviado!</strong><br>Processando sua solicitação...</div>",
+  "widthMode": "responsive",
+  "focusFirstQuestionAutomatic": true
+}
