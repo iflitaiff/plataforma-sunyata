@@ -22,6 +22,9 @@ if (!isset($_SESSION['user']['access_level']) || $_SESSION['user']['access_level
 
 $db = Database::getInstance();
 
+// IMPORTANTE: Inicializar $stats como array ANTES de usar
+$stats = [];
+
 // Stats for admin-header.php (pending requests badge)
 try {
     $result = $db->fetchOne("

@@ -22,6 +22,9 @@ if (!isset($_SESSION['user']['access_level']) || $_SESSION['user']['access_level
 
 $db = Database::getInstance();
 
+// IMPORTANTE: Inicializar $stats como array ANTES de usar
+$stats = [];
+
 // Stats for admin-header.php (pending requests badge)
 try {
     $result = $db->fetchOne("
@@ -51,15 +54,16 @@ $canvasTemplates = $db->fetchAll("
 ");
 
 // Contar conversas por canvas (para estatísticas)
+// CORRIGIDO: Usar $statsResult ao invés de $stats para evitar sobrescrita
 $canvasStats = [];
 foreach ($canvasTemplates as $canvas) {
-    $stats = $db->fetchOne("
+    $statsResult = $db->fetchOne("
         SELECT COUNT(*) as total_conversations
         FROM conversations
         WHERE canvas_id = :canvas_id
     ", ['canvas_id' => $canvas['id']]);
 
-    $canvasStats[$canvas['id']] = $stats['total_conversations'] ?? 0;
+    $canvasStats[$canvas['id']] = $statsResult['total_conversations'] ?? 0;
 }
 
 $pageTitle = 'Canvas Templates';
