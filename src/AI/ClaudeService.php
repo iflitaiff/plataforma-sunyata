@@ -100,12 +100,15 @@ class ClaudeService {
 
             // Calcular custo (aproximado para Claude 3.5 Sonnet)
             // Input: $3/MTok, Output: $15/MTok
-            $costUsd = ($tokensInput * 0.000003) + ($tokensOutput * 0.000015);
+            // Em modo mock, custo é sempre $0.00
+            $costUsd = (defined('CLAUDE_MOCK_MODE') && CLAUDE_MOCK_MODE)
+                ? 0.00
+                : (($tokensInput * 0.000003) + ($tokensOutput * 0.000015));
 
             // Atualizar histórico com sucesso
             $this->updateHistoryRecord($historyId, [
                 'claude_response' => $claudeResponse,
-                'claude_model' => $model,
+                'claude_model' => (defined('CLAUDE_MOCK_MODE') && CLAUDE_MOCK_MODE) ? 'claude-mock-v1' : $model,
                 'tokens_input' => $tokensInput,
                 'tokens_output' => $tokensOutput,
                 'tokens_total' => $tokensTotal,
@@ -173,6 +176,51 @@ class ClaudeService {
     }
 
     /**
+     * Gera resposta mock (Lorem ipsum jurídico) para testes sem gastar créditos API
+     *
+     * @param array $payload Payload que seria enviado para API (usado para calcular tokens simulados)
+     * @return array Resposta simulada no formato da API Claude
+     */
+    private function generateMockResponse(array $payload): array {
+        // Variações de Lorem ipsum com tom jurídico
+        $mockResponses = [
+            "**ANÁLISE JURÍDICA PRELIMINAR**\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Com base na análise do documento fornecido e nas informações do canvas, apresento a seguinte fundamentação:\n\n**1. Fundamentação Legal**\nSed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\n**2. Teses Aplicáveis**\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur:\n- Excepteur sint occaecat cupidatat non proident\n- Sunt in culpa qui officia deserunt mollit anim\n- Id est laborum et dolorum fuga\n\n**3. Precedentes Relevantes**\nEt harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit.\n\n**4. Considerações Finais**\nTemporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.",
+
+            "**PARECER TÉCNICO-JURÍDICO**\n\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti.\n\n**I. RELATÓRIO**\nQuos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga.\n\n**II. ANÁLISE DO MÉRITO**\nEt harum quidem rerum facilis est et expedita distinctio:\n1. Nam libero tempore, cum soluta nobis\n2. Eligendi optio cumque nihil impedit\n3. Quo minus id quod maxime placeat\n\n**III. FUNDAMENTAÇÃO**\nFacere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus.\n\n**IV. CONCLUSÃO**\nItaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.",
+
+            "**ESTRUTURA DE PEÇA PROCESSUAL**\n\nExcelentíssimo Senhor Doutor Juiz de Direito da [lorem ipsum] Vara [dolor sit amet] da Comarca de [consectetur adipiscing].\n\n**DOS FATOS**\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis.\n\n**DO DIREITO**\nNemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit:\n- Sed quia consequuntur magni dolores\n- Eos qui ratione voluptatem sequi nesciunt\n- Neque porro quisquam est qui dolorem\n\n**DOS PEDIDOS**\nQuis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.\n\nNestes termos, pede deferimento.\n\n[Local], [data].\n[Advogado(a)]",
+
+            "**RESPOSTA AO CANVAS JURÍDICO**\n\nConsiderando os critérios estabelecidos e a documentação anexada, apresento a seguinte análise estruturada:\n\n**CONTEXTUALIZAÇÃO**\nUt enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.\n\n**DESENVOLVIMENTO**\nQuis autem vel eum iure reprehenderit:\n• Qui in ea voluptate velit esse\n• Quam nihil molestiae consequatur\n• Vel illum qui dolorem eum fugiat\n\n**ARGUMENTAÇÃO CENTRAL**\nAt vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores.\n\n**FUNDAMENTAÇÃO NORMATIVA**\nEt quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi.\n\n**CONCLUSÃO PROPOSTA**\nId est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio.",
+
+            "**MINUTA JURÍDICA**\n\nSed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n\n**IDENTIFICAÇÃO**\nLorem ipsum dolor sit amet, consectetur adipiscing elit, conforme documentação em anexo.\n\n**QUALIFICAÇÃO JURÍDICA**\nUt enim ad minim veniam, quis nostrud exercitation:\na) Ullamco laboris nisi ut aliquip\nb) Ex ea commodo consequat\nc) Duis aute irure dolor\n\n**DISPOSITIVOS APLICÁVEIS**\nIn reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.\n\n**ORIENTAÇÃO**\nSunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem.\n\n**OBSERVAÇÕES COMPLEMENTARES**\nAccusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
+        ];
+
+        // Selecionar resposta aleatória
+        $selectedResponse = $mockResponses[array_rand($mockResponses)];
+
+        // Simular tokens baseado no tamanho (aproximado)
+        $promptText = $payload['messages'][0]['content'] ?? '';
+        $systemText = $payload['system'] ?? '';
+        $inputTokens = (int)((strlen($promptText) + strlen($systemText)) / 4); // ~4 chars por token
+        $outputTokens = (int)(strlen($selectedResponse) / 4);
+
+        // Simular tempo de resposta (500-1500ms)
+        usleep(rand(500000, 1500000)); // microseconds
+
+        return [
+            'content' => [
+                ['text' => $selectedResponse]
+            ],
+            'usage' => [
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens
+            ],
+            'stop_reason' => 'end_turn',
+            'model' => 'claude-mock-v1'
+        ];
+    }
+
+    /**
      * Faz chamada HTTP para Claude API
      *
      * @param array $payload Dados a enviar
@@ -180,6 +228,10 @@ class ClaudeService {
      * @throws Exception
      */
     private function callClaudeApi(array $payload): array {
+        // MODO MOCK: Retorna resposta simulada sem chamar API
+        if (defined('CLAUDE_MOCK_MODE') && CLAUDE_MOCK_MODE) {
+            return $this->generateMockResponse($payload);
+        }
         $ch = curl_init($this->apiUrl);
 
         curl_setopt_array($ch, [
@@ -309,13 +361,17 @@ class ClaudeService {
 
             // Calcular custo (aproximado para Claude 3.5 Sonnet)
             // Input: $3/MTok, Output: $15/MTok
-            $costUsd = ($tokensInput * 0.000003) + ($tokensOutput * 0.000015);
+            // Em modo mock, custo é sempre $0.00
+            $costUsd = (defined('CLAUDE_MOCK_MODE') && CLAUDE_MOCK_MODE)
+                ? 0.00
+                : (($tokensInput * 0.000003) + ($tokensOutput * 0.000015));
 
             return [
                 'success' => true,
                 'content' => $claudeResponse,
                 'message_type' => $messageType,
                 'finish_reason' => $finishReason,
+                'model' => (defined('CLAUDE_MOCK_MODE') && CLAUDE_MOCK_MODE) ? 'claude-mock-v1' : $model,
                 'usage' => [
                     'input_tokens' => $tokensInput,
                     'output_tokens' => $tokensOutput,

@@ -199,6 +199,16 @@ $pageTitle = $canvas['name'];
             <p>Análise jurídica assistida por IA com upload de documentos</p>
         </div>
 
+        <?php if (defined('CLAUDE_MOCK_MODE') && CLAUDE_MOCK_MODE): ?>
+        <!-- Modo Teste Ativo -->
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <strong>⚠️ MODO TESTE ATIVO</strong><br>
+            Respostas simuladas (Lorem ipsum). Não consome créditos da API Claude.<br>
+            <small>Para desabilitar: remova CLAUDE_MOCK_MODE do .env ou defina como false</small>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php endif; ?>
+
         <!-- Survey Container -->
         <div id="surveyContainer"></div>
 
