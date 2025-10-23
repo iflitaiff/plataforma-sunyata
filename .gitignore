@@ -67,7 +67,43 @@ coverage/
 # Database dumps
 *.sql
 !config/database.sql
+*.sql.old
+backup_*.sql
 
 # Build artifacts
 dist/
 build/
+config/database.local.php
+
+# Screenshots e binários
+Screenshots/
+*.Zone.Identifier
+
+# Comunicação interna (ai-comm)
+ai-comm/
+COMUNICACAO-*.md
+GUIA-COMUNICACAO-AI.md
+MANUS-*.md
+RESPOSTA-*.md
+PEDIDO-*.md
+RELATORIO-*.md
+ANALISE-*.md
+AUDITORIA-*.md
+PROPOSTA-*.md
+
+# Emojis em nomes de arquivo
+🎯*.md
+🔍*.md
+📊*.md
+
+# Resumos diários e sprints
+RESUMO-DIA-*.md
+*-COMPLETO.md
+
+# Arquivos de contexto AI
+START-HERE-*.md
+CONTEXTO-*.md
+BACKLOG-*.md
+
+# Deploy commands (migrado para docs)
+deploy-commands.html
