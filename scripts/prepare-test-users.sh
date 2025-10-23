@@ -98,7 +98,7 @@ echo -e "${GREEN}✓ Confirmação recebida. Iniciando remoção...${NC}"
 echo ""
 
 # 1. Obter IDs dos usuários a remover
-echo -e "${BLUE}[1/8]${NC} Identificando IDs dos usuários..."
+echo -e "${BLUE}[1/12]${NC} Identificando IDs dos usuários..."
 USER_IDS=()
 for email in "${TEST_USERS[@]}"; do
     USER_ID=$(execute_sql "SELECT id FROM users WHERE email = '$email';" | tail -1)
@@ -119,7 +119,7 @@ echo "      Total de usuários a remover: ${#USER_IDS[@]}"
 echo ""
 
 # 2. Remover consents LGPD (compliance)
-echo -e "${BLUE}[2/9]${NC} Removendo consents LGPD..."
+echo -e "${BLUE}[2/12]${NC} Removendo consents LGPD..."
 CONSENT_COUNT=$(execute_sql "SELECT COUNT(*) FROM consents WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$CONSENT_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM consents WHERE user_id IN ($IDS_LIST);"
@@ -130,7 +130,7 @@ fi
 echo ""
 
 # 3. Remover histórico de prompts (prompt_history)
-echo -e "${BLUE}[3/9]${NC} Removendo histórico de prompts da API Claude..."
+echo -e "${BLUE}[3/12]${NC} Removendo histórico de prompts da API Claude..."
 PROMPT_COUNT=$(execute_sql "SELECT COUNT(*) FROM prompt_history WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$PROMPT_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM prompt_history WHERE user_id IN ($IDS_LIST);"
@@ -141,7 +141,7 @@ fi
 echo ""
 
 # 4. Remover solicitações de acesso vertical
-echo -e "${BLUE}[4/9]${NC} Removendo solicitações de acesso vertical..."
+echo -e "${BLUE}[4/12]${NC} Removendo solicitações de acesso vertical..."
 ACCESS_COUNT=$(execute_sql "SELECT COUNT(*) FROM vertical_access_requests WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$ACCESS_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM vertical_access_requests WHERE user_id IN ($IDS_LIST);"
@@ -152,7 +152,7 @@ fi
 echo ""
 
 # 5. Remover perfis de usuário
-echo -e "${BLUE}[5/9]${NC} Removendo perfis de usuário..."
+echo -e "${BLUE}[5/12]${NC} Removendo perfis de usuário..."
 PROFILE_COUNT=$(execute_sql "SELECT COUNT(*) FROM user_profiles WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$PROFILE_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM user_profiles WHERE user_id IN ($IDS_LIST);"
@@ -162,8 +162,86 @@ else
 fi
 echo ""
 
-# 6. Remover logs de auditoria
-echo -e "${BLUE}[6/9]${NC} Removendo logs de auditoria..."
+# 6a. Remover mensagens de conversas do Canvas (conversation_messages)
+echo -e "${BLUE}[6a/12]${NC} Removendo mensagens de conversas do Canvas..."
+MSG_COUNT=$(execute_sql "
+    SELECT COUNT(*) FROM conversation_messages cm
+    INNER JOIN conversations c ON cm.conversation_id = c.id
+    WHERE c.user_id IN ($IDS_LIST);" | tail -1)
+if [ "$MSG_COUNT" -gt 0 ]; then
+    execute_sql "
+        DELETE cm FROM conversation_messages cm
+        INNER JOIN conversations c ON cm.conversation_id = c.id
+        WHERE c.user_id IN ($IDS_LIST);"
+    echo "      ✓ $MSG_COUNT mensagem(ns) removida(s)"
+else
+    echo "      - Nenhuma mensagem encontrada"
+fi
+echo ""
+
+# 6b. Remover links conversa-arquivo (conversation_files)
+echo -e "${BLUE}[6b/12]${NC} Removendo links conversa-arquivo..."
+LINK_COUNT=$(execute_sql "
+    SELECT COUNT(*) FROM conversation_files cf
+    INNER JOIN conversations c ON cf.conversation_id = c.id
+    WHERE c.user_id IN ($IDS_LIST);" | tail -1)
+if [ "$LINK_COUNT" -gt 0 ]; then
+    execute_sql "
+        DELETE cf FROM conversation_files cf
+        INNER JOIN conversations c ON cf.conversation_id = c.id
+        WHERE c.user_id IN ($IDS_LIST);"
+    echo "      ✓ $LINK_COUNT link(s) removido(s)"
+else
+    echo "      - Nenhum link encontrado"
+fi
+echo ""
+
+# 6c. Remover conversas do Canvas (conversations)
+echo -e "${BLUE}[6c/12]${NC} Removendo conversas do Canvas..."
+CONV_COUNT=$(execute_sql "SELECT COUNT(*) FROM conversations WHERE user_id IN ($IDS_LIST);" | tail -1)
+if [ "$CONV_COUNT" -gt 0 ]; then
+    execute_sql "DELETE FROM conversations WHERE user_id IN ($IDS_LIST);"
+    echo "      ✓ $CONV_COUNT conversa(s) removida(s)"
+else
+    echo "      - Nenhuma conversa encontrada"
+fi
+echo ""
+
+# 6d. Remover arquivos físicos de uploads (Canvas v2)
+echo -e "${BLUE}[6d/12]${NC} Removendo arquivos físicos de uploads..."
+UPLOAD_DIR="/home/u202164171/domains/sunyataconsulting.com/storage/uploads"
+TOTAL_FILES_DELETED=0
+for user_id in "${USER_IDS[@]}"; do
+    FILES_TO_DELETE=$(execute_sql "SELECT filepath FROM user_files WHERE user_id = $user_id;")
+    FILE_COUNT=0
+    while IFS= read -r filepath; do
+        if [ ! -z "$filepath" ] && [ "$filepath" != "filepath" ]; then
+            execute_remote "rm -f \"$UPLOAD_DIR/$filepath\" 2>/dev/null"
+            ((FILE_COUNT++))
+        fi
+    done <<< "$FILES_TO_DELETE"
+    TOTAL_FILES_DELETED=$((TOTAL_FILES_DELETED + FILE_COUNT))
+done
+if [ $TOTAL_FILES_DELETED -gt 0 ]; then
+    echo "      ✓ $TOTAL_FILES_DELETED arquivo(s) físico(s) removido(s)"
+else
+    echo "      - Nenhum arquivo físico encontrado"
+fi
+echo ""
+
+# 6e. Remover metadados de uploads (user_files)
+echo -e "${BLUE}[6e/12]${NC} Removendo metadados de uploads (user_files)..."
+FILE_COUNT=$(execute_sql "SELECT COUNT(*) FROM user_files WHERE user_id IN ($IDS_LIST);" | tail -1)
+if [ "$FILE_COUNT" -gt 0 ]; then
+    execute_sql "DELETE FROM user_files WHERE user_id IN ($IDS_LIST);"
+    echo "      ✓ $FILE_COUNT registro(s) removido(s) de user_files"
+else
+    echo "      - Nenhum metadado de arquivo encontrado"
+fi
+echo ""
+
+# 7. Remover logs de auditoria
+echo -e "${BLUE}[7/12]${NC} Removendo logs de auditoria..."
 AUDIT_COUNT=$(execute_sql "SELECT COUNT(*) FROM audit_logs WHERE user_id IN ($IDS_LIST);" | tail -1)
 if [ "$AUDIT_COUNT" -gt 0 ]; then
     execute_sql "DELETE FROM audit_logs WHERE user_id IN ($IDS_LIST);"
@@ -173,8 +251,8 @@ else
 fi
 echo ""
 
-# 7. Remover os próprios usuários
-echo -e "${BLUE}[7/9]${NC} Removendo registros de usuários..."
+# 8. Remover os próprios usuários
+echo -e "${BLUE}[8/12]${NC} Removendo registros de usuários..."
 for email in "${TEST_USERS[@]}"; do
     RESULT=$(execute_sql "DELETE FROM users WHERE email = '$email' AND access_level != 'admin';" 2>&1)
     if [ $? -eq 0 ]; then
@@ -183,8 +261,8 @@ for email in "${TEST_USERS[@]}"; do
 done
 echo ""
 
-# 8. Limpar sessões ativas (TODAS as sessões para garantir)
-echo -e "${BLUE}[8/9]${NC} Limpando TODAS as sessões ativas..."
+# 9. Limpar sessões ativas (TODAS as sessões para garantir)
+echo -e "${BLUE}[9/12]${NC} Limpando TODAS as sessões ativas..."
 SESSION_DIR="/home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/var/sessions"
 SESSION_COUNT=$(execute_remote "find $SESSION_DIR -type f -name 'sess_*' 2>/dev/null | wc -l" | tr -d ' ')
 if [ "$SESSION_COUNT" -gt 0 ]; then
@@ -196,8 +274,8 @@ else
 fi
 echo ""
 
-# 9. Limpar cache
-echo -e "${BLUE}[9/9]${NC} Limpando cache do sistema..."
+# 10. Limpar cache
+echo -e "${BLUE}[10/12]${NC} Limpando cache do sistema..."
 CACHE_DIR="/home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/var/cache"
 execute_remote "rm -rf $CACHE_DIR/* 2>/dev/null"
 echo "      ✓ Cache limpo"
@@ -215,6 +293,11 @@ echo "   • Consents LGPD removidos: $CONSENT_COUNT"
 echo "   • Prompts removidos: $PROMPT_COUNT"
 echo "   • Solicitações removidas: $ACCESS_COUNT"
 echo "   • Perfis removidos: $PROFILE_COUNT"
+echo "   • Mensagens Canvas removidas: $MSG_COUNT"
+echo "   • Links conversa-arquivo removidos: $LINK_COUNT"
+echo "   • Conversas Canvas removidas: $CONV_COUNT"
+echo "   • Arquivos físicos removidos: $TOTAL_FILES_DELETED"
+echo "   • Metadados de arquivos removidos: $FILE_COUNT"
 echo "   • Logs removidos: $AUDIT_COUNT"
 echo "   • Usuários removidos: ${#USER_IDS[@]}"
 echo "   • Sessões limpas: $SESSION_COUNT (TODAS)"
@@ -238,10 +321,28 @@ echo -e "${BLUE}📋 Status do Sistema:${NC}"
 TOTAL_USERS=$(execute_sql "SELECT COUNT(*) FROM users;" | tail -1)
 ADMIN_USERS=$(execute_sql "SELECT COUNT(*) FROM users WHERE access_level = 'admin';" | tail -1)
 PENDING_REQUESTS=$(execute_sql "SELECT COUNT(*) FROM vertical_access_requests WHERE status = 'pending';" | tail -1)
+CANVAS_CONVERSATIONS=$(execute_sql "SELECT COUNT(*) FROM conversations;" | tail -1)
+CANVAS_FILES=$(execute_sql "SELECT COUNT(*) FROM user_files;" | tail -1)
 
 echo "   • Total de usuários no sistema: $TOTAL_USERS"
 echo "   • Administradores: $ADMIN_USERS"
 echo "   • Solicitações pendentes: $PENDING_REQUESTS"
+echo "   • Conversas Canvas ativas: $CANVAS_CONVERSATIONS"
+echo "   • Arquivos no sistema: $CANVAS_FILES"
+echo ""
+
+# Verificar uploads órfãos (arquivos sem usuário)
+echo -e "${YELLOW}🔍 Verificando integridade do Canvas v2...${NC}"
+ORPHAN_FILES=$(execute_sql "
+    SELECT COUNT(*) FROM user_files uf
+    LEFT JOIN users u ON uf.user_id = u.id
+    WHERE u.id IS NULL;" | tail -1)
+if [ "$ORPHAN_FILES" -gt 0 ]; then
+    echo -e "   ${YELLOW}⚠️  $ORPHAN_FILES arquivo(s) órfão(s) encontrado(s)${NC}"
+    echo "   Execute: DELETE FROM user_files WHERE user_id NOT IN (SELECT id FROM users);"
+else
+    echo -e "   ${GREEN}✓ Nenhum arquivo órfão encontrado${NC}"
+fi
 echo ""
 
 # Configuração atual
