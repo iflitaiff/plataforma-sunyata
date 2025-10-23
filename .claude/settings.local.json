@@ -1,20 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(do sed -i 's/ifrj-alunos/ifrj_alunos/g' \"$file\")",
-      "Bash(do echo \"=== $dir ===\")",
-      "Bash(ls:*)",
-      "Read(//tmp/**)",
-      "Bash(public/areas/ )",
-      "Bash(u202164171@89.117.27.145:domains/portal.sunyataconsulting.com/public_html/areas/)",
-      "Bash(tar:*)",
+      "Bash(wc:*)",
+      "Bash(comm-cli send:*)",
+      "Bash(sudo ln:*)",
+      "Bash(comm-cli:*)",
+      "Bash(alias comm-cli='~/comm-cli.sh')",
+      "Bash(~/comm-cli.sh:*)",
+      "Bash(ssh:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git remote:*)",
       "Bash(scp:*)",
-      "Bash(if [ \"$file\" != \"docencia/index.php\" ])",
-      "Bash(echo \"Fixed: $file\")",
-      "Bash(if [ \"$file\" != \"pesquisa/index.php\" ])",
-      "Bash(if [ \"$file\" != \"ifrj_alunos/index.php\" ])",
-      "Bash(if [ \"$file\" != \"juridico/index.php\" ])",
-      "Bash(git reset:*)"
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

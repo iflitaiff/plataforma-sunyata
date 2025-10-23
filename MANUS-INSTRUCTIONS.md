@@ -16,8 +16,8 @@ Este documento explica como você (Manus) deve usar o **COMM-BOARD.html** para s
 
 **Servidor de Produção (Hostinger):**
 ```
-Path: /home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/COMM-BOARD.html
-URL: https://portal.sunyataconsulting.com/plataforma-sunyata/COMM-BOARD.html
+Path: /home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/public/COMM-BOARD.html
+URL: https://portal.sunyataconsulting.com/COMM-BOARD.html
 ```
 
 **Repositório Git:**
@@ -45,7 +45,7 @@ File: COMM-BOARD.html (na raiz do projeto)
 ssh -p 65002 u202164171@82.25.72.226
 
 # 2. Navegar para o diretório
-cd /home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata
+cd /home/u202164171/domains/sunyataconsulting.com/public_html/plataforma-sunyata/public
 
 # 3. Editar o arquivo
 nano COMM-BOARD.html

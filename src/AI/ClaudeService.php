@@ -13,6 +13,7 @@
 namespace Sunyata\AI;
 
 use Sunyata\Core\Database;
+use Sunyata\Core\MarkdownLogger;
 use Exception;
 
 class ClaudeService {
@@ -113,6 +114,17 @@ class ClaudeService {
                 'status' => 'success'
             ]);
 
+            // Log Claude API call
+            MarkdownLogger::getInstance()->claudeApiCall(
+                userId: $userId,
+                canvas: $vertical,
+                inputTokens: $tokensInput,
+                outputTokens: $tokensOutput,
+                costUsd: $costUsd,
+                responseTime: $responseTimeMs / 1000, // converter ms para segundos
+                status: 'success'
+            );
+
             return [
                 'success' => true,
                 'response' => $claudeResponse,
@@ -130,12 +142,26 @@ class ClaudeService {
             // Registrar erro
             error_log('ClaudeService::generate() failed: ' . $e->getMessage());
 
+            $responseTimeMs = (int)((microtime(true) - $startTime) * 1000);
+
             // Atualizar histórico com erro
             $this->updateHistoryRecord($historyId, [
                 'status' => 'error',
                 'error_message' => $e->getMessage(),
-                'response_time_ms' => (int)((microtime(true) - $startTime) * 1000)
+                'response_time_ms' => $responseTimeMs
             ]);
+
+            // Log Claude API call failure
+            MarkdownLogger::getInstance()->claudeApiCall(
+                userId: $userId,
+                canvas: $vertical,
+                inputTokens: 0,
+                outputTokens: 0,
+                costUsd: 0.0,
+                responseTime: $responseTimeMs / 1000,
+                status: 'error',
+                extraContext: ['error' => $e->getMessage()]
+            );
 
             return [
                 'success' => false,

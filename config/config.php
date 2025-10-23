@@ -41,20 +41,18 @@ require_once $secretsFile;
 // Priority: database.local.php (local dev) > secrets.php (production)
 $localDbFile = CONFIG_PATH . '/database.local.php';
 if (file_exists($localDbFile)) {
-    // Local development database
+    // Local development database (overrides secrets.php constants)
     require_once $localDbFile;
-} else {
-    // Production database (from secrets.php)
-    define('DB_HOST', DB_HOST);
-    define('DB_NAME', DB_NAME);
-    define('DB_USER', DB_USER);
-    define('DB_PASS', DB_PASS);
-    define('DB_CHARSET', 'utf8mb4');
 }
 
-// Google OAuth (loaded from secrets.php)
-define('GOOGLE_CLIENT_ID', GOOGLE_CLIENT_ID);
-define('GOOGLE_CLIENT_SECRET', GOOGLE_CLIENT_SECRET);
+// Note: DB_HOST, DB_NAME, DB_USER, DB_PASS are already defined in secrets.php
+// Note: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET are already defined in secrets.php
+// No need to redefine them here
+
+// Database charset (additional config not in secrets.php)
+if (!defined('DB_CHARSET')) {
+    define('DB_CHARSET', 'utf8mb4');
+}
 
 // Session configuration
 define('SESSION_LIFETIME', 3600 * 24); // 24 hours
@@ -87,6 +85,9 @@ define('VERTICALS', [
     'hr' => 'RH',
     'general' => 'Geral'
 ]);
+
+// Error Handler - Must be loaded after constants are defined
+require_once __DIR__ . '/error-handler.php';
 
 // Helper functions
 function require_login() {
